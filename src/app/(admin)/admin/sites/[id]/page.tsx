@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { SiteSectionsEditor } from "@/app/(admin)/admin/sites/site-sections-editor";
 import { requireAdminProfile } from "@/lib/auth/admin";
 import { getSite } from "@/lib/sites/queries";
 import { templateLabel } from "@/lib/templates/registry";
@@ -70,34 +71,17 @@ export default async function SiteDetailPage({ params }: PageProps) {
       </section>
 
       <section className="grid gap-3">
-        <h2 className="text-lg font-medium">Seções</h2>
-        {sections.length === 0 ? (
-          <p className="text-sm text-zinc-500">Nenhuma seção gerada.</p>
+        <div className="grid gap-1">
+          <h2 className="text-lg font-medium">Seções</h2>
+          <p className="text-sm text-zinc-500">
+            Edite textos, ordem e visibilidade. Salvar recarrega o mesmo
+            conteúdo.
+          </p>
+        </div>
+        {site.home_page ? (
+          <SiteSectionsEditor siteId={site.id} sections={sections} />
         ) : (
-          <div className="overflow-x-auto border-t border-zinc-200 dark:border-zinc-800">
-            <table className="w-full min-w-[28rem] text-left text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 text-zinc-500 dark:border-zinc-800">
-                  <th className="py-3 pr-4 font-medium">Posição</th>
-                  <th className="py-3 pr-4 font-medium">Seção</th>
-                  <th className="py-3 pr-4 font-medium">Módulo</th>
-                  <th className="py-3 font-medium">Visível</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {sections.map((section) => (
-                  <tr key={section.id}>
-                    <td className="py-3 pr-4 tabular-nums">{section.position}</td>
-                    <td className="py-3 pr-4">{section.section_key}</td>
-                    <td className="py-3 pr-4">{section.module_key}</td>
-                    <td className="py-3">
-                      {section.is_visible ? "Sim" : "Não"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <p className="text-sm text-zinc-500">Nenhuma seção para editar.</p>
         )}
       </section>
     </main>

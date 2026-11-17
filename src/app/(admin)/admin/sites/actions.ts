@@ -2,14 +2,22 @@
 
 import { redirect } from "next/navigation";
 
-import { requireAdminRole } from "@/lib/auth/admin";
-import { parseSiteCreateForm } from "@/lib/sites/schema";
+import { requireAdmin, requireAdminRole } from "@/lib/auth/admin";
+import {
+  parseSiteCreateForm,
+  type SectionEditorInput,
+} from "@/lib/sites/schema";
 import { sectionsForTemplate } from "@/lib/templates/registry";
+import { normalizeSectionPayload } from "@/modules/registry";
 import { createClient } from "@/lib/supabase/server";
 
 export type SiteActionState = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
+};
+
+export type SectionsActionState = {
+  error?: string;
 };
 
 export async function createSite(
@@ -105,6 +113,113 @@ export async function createSite(
   }
 
   redirect(`/admin/sites/${site.id}`);
+}
+
+export async function updateSiteSections(
+  siteId: string,
+  _state: SectionsActionState,
+  formData: FormData,
+): Promise<SectionsActionState> {
+  await requireAdmin();
+
+  const raw = String(formData.get("sections") ?? "");
+  let inputs: SectionEditorInput[];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return { error: "Payload de seções inválido." };
+    }
+    inputs = parsed as SectionEditorInput[];
+  } catch {
+    return { error: "Payload de seções inválido." };
+  }
+
+  if (inputs.length === 0) {
+    return { error: "Nenhuma seção para salvar." };
+  }
+
+  const supabase = await createClient();
+  const { data: page, error: pageError } = await supabase
+    .from("site_pages")
+    .select("id")
+    .eq("site_id", siteId)
+    .eq("path", "/")
+    .maybeSingle();
+
+  if (pageError || !page) {
+    return { error: "Página inicial do site não encontrada." };
+  }
+
+  const { data: existingRows, error: existingError } = await supabase
+    .from("site_sections")
+    .select("id, module_key")
+    .eq("page_id", page.id);
+
+  if (existingError || !existingRows) {
+    return { error: "Não foi possível carregar as seções do site." };
+  }
+
+  const existingById = new Map(
+    existingRows.map((row) => [row.id, row.module_key]),
+  );
+
+  if (inputs.length !== existingById.size) {
+    return { error: "O conjunto de seções não confere com o site." };
+  }
+
+  const updates: Array<{
+    id: string;
+    is_visible: boolean;
+    position: number;
+    content: Record<string, unknown>;
+    settings: Record<string, unknown>;
+  }> = [];
+
+  for (const [position, input] of inputs.entries()) {
+    if (!input?.id || typeof input.id !== "string") {
+      return { error: "Seção sem identificador." };
+    }
+    const moduleKey = existingById.get(input.id);
+    if (!moduleKey) {
+      return { error: "Uma das seções não pertence a este site." };
+    }
+
+    const normalized = normalizeSectionPayload(
+      moduleKey,
+      input.content,
+      input.settings ?? {},
+    );
+    if (!normalized.success) {
+      return { error: `${moduleKey}: ${normalized.error}` };
+    }
+
+    updates.push({
+      id: input.id,
+      is_visible: Boolean(input.is_visible),
+      position,
+      content: normalized.data.content,
+      settings: normalized.data.settings,
+    });
+  }
+
+  for (const update of updates) {
+    const { error } = await supabase
+      .from("site_sections")
+      .update({
+        is_visible: update.is_visible,
+        position: update.position,
+        content: update.content,
+        settings: update.settings,
+      })
+      .eq("id", update.id)
+      .eq("page_id", page.id);
+
+    if (error) {
+      return { error: "Não foi possível salvar as seções." };
+    }
+  }
+
+  redirect(`/admin/sites/${siteId}`);
 }
 
 async function rollbackSite(

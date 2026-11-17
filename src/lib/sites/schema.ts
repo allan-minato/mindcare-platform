@@ -30,6 +30,15 @@ export type SiteSection = {
   section_key: string;
   position: number;
   is_visible: boolean;
+  content: Record<string, unknown>;
+  settings: Record<string, unknown>;
+};
+
+export type SectionEditorInput = {
+  id: string;
+  is_visible: boolean;
+  content: Record<string, unknown>;
+  settings: Record<string, unknown>;
 };
 
 export type SiteDetail = {

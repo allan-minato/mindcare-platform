@@ -9,6 +9,7 @@ import {
   type SiteTemplateOption,
 } from "@/lib/sites/schema";
 import { isTemplateKey, type TemplateKey } from "@/lib/templates/registry";
+import { normalizeSectionPayload } from "@/modules/registry";
 import { createClient } from "@/lib/supabase/server";
 
 type SiteListRow = {
@@ -54,6 +55,8 @@ type SectionRow = {
   section_key: string;
   position: number;
   is_visible: boolean;
+  content: unknown;
+  settings: unknown;
 };
 
 export async function listSites(): Promise<SiteListItem[]> {
@@ -132,7 +135,9 @@ export async function getSite(id: string): Promise<SiteDetail | null> {
   if (page) {
     const { data: sectionRows, error: sectionsError } = await supabase
       .from("site_sections")
-      .select("id, module_key, section_key, position, is_visible")
+      .select(
+        "id, module_key, section_key, position, is_visible, content, settings",
+      )
       .eq("page_id", page.id)
       .order("position", { ascending: true })
       .order("created_at", { ascending: true });
@@ -141,13 +146,26 @@ export async function getSite(id: string): Promise<SiteDetail | null> {
       throw new Error("Não foi possível carregar as seções do site.");
     }
 
-    sections = ((sectionRows ?? []) as SectionRow[]).map((section) => ({
-      id: section.id,
-      module_key: section.module_key,
-      section_key: section.section_key,
-      position: section.position,
-      is_visible: section.is_visible,
-    }));
+    sections = ((sectionRows ?? []) as SectionRow[]).map((section) => {
+      const normalized = normalizeSectionPayload(
+        section.module_key,
+        section.content,
+        section.settings,
+      );
+      return {
+        id: section.id,
+        module_key: section.module_key,
+        section_key: section.section_key,
+        position: section.position,
+        is_visible: section.is_visible,
+        content: normalized.success
+          ? normalized.data.content
+          : asObject(section.content),
+        settings: normalized.success
+          ? normalized.data.settings
+          : asObject(section.settings),
+      };
+    });
   }
 
   const professional = firstRelation(row.professionals);
