@@ -56,3 +56,13 @@ export function publicSiteOrigin(host: string): string {
   const protocol = isLocal ? "http" : "https";
   return `${protocol}://${host.trim().toLowerCase()}`;
 }
+
+/** URL pública do site no host interno da plataforma. */
+export function publicSiteUrl(slug: string): string {
+  const root = resolvePlatformRoot();
+  const host = `${slug}.${root}`;
+  if (root === "localhost" || root.endsWith(".localhost")) {
+    return `http://${host}:3000/`;
+  }
+  return `${publicSiteOrigin(host)}/`;
+}

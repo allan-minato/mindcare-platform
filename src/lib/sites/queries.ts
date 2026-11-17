@@ -12,12 +12,19 @@ import { isTemplateKey, type TemplateKey } from "@/lib/templates/registry";
 import { normalizeSectionPayload } from "@/modules/registry";
 import { createClient } from "@/lib/supabase/server";
 
+type PublicationFields = {
+  live_publication_id: string | null;
+  published_version: number | null;
+  published_at: string | null;
+};
+
 type SiteListRow = {
   id: string;
   name: string;
   slug: string;
   template_key: string;
   professional_id: string;
+  live_publication_id: string | null;
   created_at: string;
   updated_at: string;
   professionals:
@@ -35,6 +42,7 @@ type SiteDetailRow = {
   theme: unknown;
   seo: unknown;
   archived_at: string | null;
+  live_publication_id: string | null;
   created_at: string;
   updated_at: string;
   professionals:
@@ -59,13 +67,19 @@ type SectionRow = {
   settings: unknown;
 };
 
+type PublicationRow = {
+  id: string;
+  version: number;
+  published_at: string;
+};
+
 export async function listSites(): Promise<SiteListItem[]> {
   await requireAdmin();
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("sites")
     .select(
-      "id, name, slug, template_key, professional_id, created_at, updated_at, professionals(full_name, professional_name)",
+      "id, name, slug, template_key, professional_id, live_publication_id, created_at, updated_at, professionals(full_name, professional_name)",
     )
     .order("updated_at", { ascending: false });
 
@@ -73,11 +87,21 @@ export async function listSites(): Promise<SiteListItem[]> {
     throw new Error("Não foi possível carregar os sites.");
   }
 
-  return ((data ?? []) as SiteListRow[]).flatMap((row) => {
+  const rows = (data ?? []) as SiteListRow[];
+  const publicationIds = rows
+    .map((row) => row.live_publication_id)
+    .filter((id): id is string => Boolean(id));
+
+  const publications = await loadPublicationsById(supabase, publicationIds);
+
+  return rows.flatMap((row) => {
     if (!isTemplateKey(row.template_key)) {
       return [];
     }
     const professional = firstRelation(row.professionals);
+    const publication = row.live_publication_id
+      ? publications.get(row.live_publication_id)
+      : null;
     return [
       {
         id: row.id,
@@ -89,6 +113,9 @@ export async function listSites(): Promise<SiteListItem[]> {
           professional?.professional_name?.trim() ||
           professional?.full_name ||
           "Profissional",
+        live_publication_id: row.live_publication_id,
+        published_version: publication?.version ?? null,
+        published_at: publication?.published_at ?? null,
         created_at: row.created_at,
         updated_at: row.updated_at,
       },
@@ -102,7 +129,7 @@ export async function getSite(id: string): Promise<SiteDetail | null> {
   const { data, error } = await supabase
     .from("sites")
     .select(
-      "id, name, slug, template_key, professional_id, theme, seo, archived_at, created_at, updated_at, professionals(full_name, professional_name)",
+      "id, name, slug, template_key, professional_id, theme, seo, archived_at, live_publication_id, created_at, updated_at, professionals(full_name, professional_name)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -169,6 +196,10 @@ export async function getSite(id: string): Promise<SiteDetail | null> {
   }
 
   const professional = firstRelation(row.professionals);
+  const publicationFields = await resolvePublicationFields(
+    supabase,
+    row.live_publication_id,
+  );
 
   return {
     id: row.id,
@@ -183,6 +214,9 @@ export async function getSite(id: string): Promise<SiteDetail | null> {
     theme: asObject(row.theme),
     seo: asObject(row.seo),
     archived_at: row.archived_at,
+    live_publication_id: publicationFields.live_publication_id,
+    published_version: publicationFields.published_version,
+    published_at: publicationFields.published_at,
     created_at: row.created_at,
     updated_at: row.updated_at,
     home_page: page
@@ -239,6 +273,52 @@ export async function listEligibleProfessionals(): Promise<
   }
 
   return data ?? [];
+}
+
+async function resolvePublicationFields(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  livePublicationId: string | null,
+): Promise<PublicationFields> {
+  if (!livePublicationId) {
+    return {
+      live_publication_id: null,
+      published_version: null,
+      published_at: null,
+    };
+  }
+
+  const publications = await loadPublicationsById(supabase, [
+    livePublicationId,
+  ]);
+  const publication = publications.get(livePublicationId);
+  return {
+    live_publication_id: livePublicationId,
+    published_version: publication?.version ?? null,
+    published_at: publication?.published_at ?? null,
+  };
+}
+
+async function loadPublicationsById(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ids: string[],
+): Promise<Map<string, PublicationRow>> {
+  const uniqueIds = [...new Set(ids)];
+  if (uniqueIds.length === 0) {
+    return new Map();
+  }
+
+  const { data, error } = await supabase
+    .from("site_publications")
+    .select("id, version, published_at")
+    .in("id", uniqueIds);
+
+  if (error || !data) {
+    return new Map();
+  }
+
+  return new Map(
+    (data as PublicationRow[]).map((row) => [row.id, row] as const),
+  );
 }
 
 function firstRelation<T>(value: T | T[] | null | undefined): T | null {

@@ -20,6 +20,9 @@ export type SiteListItem = {
   template_key: TemplateKey;
   professional_id: string;
   professional_name: string;
+  live_publication_id: string | null;
+  published_version: number | null;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -51,6 +54,9 @@ export type SiteDetail = {
   theme: Record<string, unknown>;
   seo: Record<string, unknown>;
   archived_at: string | null;
+  live_publication_id: string | null;
+  published_version: number | null;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
   home_page: {

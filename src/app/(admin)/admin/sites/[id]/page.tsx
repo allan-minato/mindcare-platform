@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { SitePublishControls } from "@/app/(admin)/admin/sites/site-publish-controls";
 import { SiteSectionsEditor } from "@/app/(admin)/admin/sites/site-sections-editor";
-import { requireAdminProfile } from "@/lib/auth/admin";
+import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
+import { publicSiteUrl } from "@/lib/sites/host";
 import { getSite } from "@/lib/sites/queries";
 import { templateLabel } from "@/lib/templates/registry";
 
@@ -18,7 +20,8 @@ type PageProps = {
 };
 
 export default async function SiteDetailPage({ params }: PageProps) {
-  await requireAdminProfile();
+  const admin = await requireAdminProfile();
+  const canPublish = hasMinRole(admin.role, "admin");
   const { id } = await params;
   const site = await getSite(id);
 
@@ -27,6 +30,10 @@ export default async function SiteDetailPage({ params }: PageProps) {
   }
 
   const sections = site.home_page?.sections ?? [];
+  const isLive = Boolean(site.live_publication_id);
+  const statusLabel = isLive
+    ? `No ar · v${site.published_version ?? "—"} · ${formatPublishedAt(site.published_at)}`
+    : "Rascunho — ainda não está no ar";
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
@@ -59,12 +66,42 @@ export default async function SiteDetailPage({ params }: PageProps) {
             href={`/preview/${site.id}`}
             target="_blank"
             rel="noreferrer"
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
           >
             Ver prévia
           </Link>
         </div>
       </div>
+
+      <section className="grid gap-3">
+        <h2 className="text-lg font-medium">Publicação</h2>
+        {canPublish ? (
+          <SitePublishControls
+            siteId={site.id}
+            isLive={isLive}
+            publicUrl={publicSiteUrl(site.slug)}
+            statusLabel={statusLabel}
+          />
+        ) : (
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            {statusLabel}
+            {isLive ? (
+              <>
+                {" · "}
+                <a
+                  href={publicSiteUrl(site.slug)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline-offset-4 hover:underline"
+                >
+                  Abrir site público
+                </a>
+              </>
+            ) : null}
+            . Sua conta pode ver, mas não publicar.
+          </p>
+        )}
+      </section>
 
       <section className="grid gap-3">
         <h2 className="text-lg font-medium">Página inicial</h2>
@@ -85,7 +122,7 @@ export default async function SiteDetailPage({ params }: PageProps) {
           <h2 className="text-lg font-medium">Seções</h2>
           <p className="text-sm text-zinc-500">
             Edite textos, ordem e visibilidade. Salvar recarrega o mesmo
-            conteúdo.
+            conteúdo. Alterações só entram no ar ao publicar de novo.
           </p>
         </div>
         {site.home_page ? (
@@ -96,4 +133,18 @@ export default async function SiteDetailPage({ params }: PageProps) {
       </section>
     </main>
   );
+}
+
+function formatPublishedAt(value: string | null): string {
+  if (!value) {
+    return "sem data";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(date);
 }

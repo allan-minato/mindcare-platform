@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdmin, requireAdminRole } from "@/lib/auth/admin";
@@ -222,6 +223,78 @@ export async function updateSiteSections(
   redirect(`/admin/sites/${siteId}`);
 }
 
+export type PublishActionState = {
+  error?: string;
+};
+
+export async function publishSite(
+  siteId: string,
+  state: PublishActionState,
+  formData: FormData,
+): Promise<PublishActionState> {
+  void state;
+  void formData;
+  await requireAdminRole("admin");
+  const supabase = await createClient();
+
+  const { data: site, error: siteError } = await supabase
+    .from("sites")
+    .select("id, slug")
+    .eq("id", siteId)
+    .maybeSingle();
+
+  if (siteError || !site) {
+    return { error: "Site não encontrado." };
+  }
+
+  const { error } = await supabase.rpc("publish_site", {
+    p_site_id: siteId,
+  });
+
+  if (error) {
+    return { error: humanizePublishError(error.message) };
+  }
+
+  updateTag(`site:${site.slug}`);
+  revalidatePath(`/admin/sites/${siteId}`);
+  revalidatePath("/admin/sites");
+  redirect(`/admin/sites/${siteId}`);
+}
+
+export async function unpublishSite(
+  siteId: string,
+  state: PublishActionState,
+  formData: FormData,
+): Promise<PublishActionState> {
+  void state;
+  void formData;
+  await requireAdminRole("admin");
+  const supabase = await createClient();
+
+  const { data: site, error: siteError } = await supabase
+    .from("sites")
+    .select("id, slug")
+    .eq("id", siteId)
+    .maybeSingle();
+
+  if (siteError || !site) {
+    return { error: "Site não encontrado." };
+  }
+
+  const { error } = await supabase.rpc("unpublish_site", {
+    p_site_id: siteId,
+  });
+
+  if (error) {
+    return { error: humanizePublishError(error.message) };
+  }
+
+  updateTag(`site:${site.slug}`);
+  revalidatePath(`/admin/sites/${siteId}`);
+  revalidatePath("/admin/sites");
+  redirect(`/admin/sites/${siteId}`);
+}
+
 async function rollbackSite(
   supabase: Awaited<ReturnType<typeof createClient>>,
   siteId: string,
@@ -276,4 +349,24 @@ function humanizeDbError(message?: string, part?: string) {
   return part
     ? `Não foi possível criar as ${part} do site.`
     : "Não foi possível criar o site.";
+}
+
+function humanizePublishError(message: string) {
+  const lower = message.toLowerCase();
+  if (lower.includes("arquivado")) {
+    return "Site ou profissional arquivado não pode ir ao ar.";
+  }
+  if (lower.includes("registro") || lower.includes("registration")) {
+    return "O profissional precisa ter número de registro para publicar.";
+  }
+  if (lower.includes("página") || lower.includes("page") || lower.includes("/")) {
+    return "A página inicial precisa estar visível para publicar.";
+  }
+  if (lower.includes("acesso") || lower.includes("privilege")) {
+    return "Sem permissão para publicar ou despublicar.";
+  }
+  if (lower.includes("não encontrado") || lower.includes("not found")) {
+    return "Site não encontrado.";
+  }
+  return message || "Não foi possível alterar a publicação.";
 }
