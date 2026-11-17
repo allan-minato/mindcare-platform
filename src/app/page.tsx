@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { publicSupabaseEnv } from "@/lib/supabase/public-env";
 
 export default function Home() {
@@ -13,9 +15,15 @@ export default function Home() {
           MindCare Platform
         </h1>
         <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-          Aplicativo local pronto. O banco, o login e os sites entram nas
+          Aplicativo local pronto. O banco já está no ar. Os sites entram nas
           próximas etapas.
         </p>
+        <Link
+          href="/admin"
+          className="text-sm font-medium underline underline-offset-4"
+        >
+          Abrir o painel
+        </Link>
       </div>
       <dl className="grid gap-4 border-t border-zinc-200 pt-6 dark:border-zinc-800">
         <div className="grid gap-1">
