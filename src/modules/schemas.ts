@@ -5,10 +5,19 @@ const titleBodyItem = z.object({
   body: z.string().trim().min(1, "Informe o texto do item.").max(5000),
 });
 
+const optionalHttpsUrl = z
+  .string()
+  .trim()
+  .default("")
+  .refine((value) => value.length === 0 || /^https:\/\//.test(value), {
+    message: "A URL da imagem precisa começar com https://.",
+  });
+
 export const heroContentSchema = z.object({
   headline: z.string().trim().max(200).default(""),
   support: z.string().trim().max(2000).default(""),
   badges: z.array(z.string().trim().min(1).max(80)).default([]),
+  image_url: optionalHttpsUrl,
 });
 
 export const recognitionContentSchema = z.object({
@@ -27,6 +36,7 @@ export const aboutContentSchema = z.object({
   title: z.string().trim().max(200).default(""),
   body: z.string().trim().max(10000).default(""),
   credential: z.string().trim().max(200).default(""),
+  image_url: optionalHttpsUrl,
 });
 
 export const approachContentSchema = z.object({

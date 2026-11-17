@@ -7,19 +7,15 @@ import { requireAdminProfile } from "@/lib/auth/admin";
 import { getSite } from "@/lib/sites/queries";
 import { templateLabel } from "@/lib/templates/registry";
 
+export const instant = false;
+
+export const metadata: Metadata = {
+  title: "Site · MindCare",
+};
+
 type PageProps = {
   params: Promise<{ id: string }>;
 };
-
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
-  const { id } = await params;
-  const site = await getSite(id);
-  return {
-    title: site ? `${site.name} · MindCare` : "Site · MindCare",
-  };
-}
 
 export default async function SiteDetailPage({ params }: PageProps) {
   await requireAdminProfile();

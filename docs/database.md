@@ -117,6 +117,7 @@ Quando o profissional ganhar login, entra uma tabela de vínculo entre `auth.use
 | `20261116031907` | `admin_users_and_roles` | Schema `private`, papéis, `admin_users`, `has_role` |
 | `20261116031946` | `professionals_and_sites` | Profissionais, templates, sites, domínios, páginas, seções e RLS |
 | `20261116032016` | `site_publications` | Snapshots, ponteiro de publicação e funções de prévia, publicação e leitura pública |
+| `20261117185749` | `site_media_bucket` | Bucket `site-media` (leitura pública; escrita `editor+`) |
 
 Os nomes dos arquivos usam as mesmas versões registradas no projeto remoto.
 

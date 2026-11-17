@@ -9,6 +9,8 @@ import {
   listEligibleProfessionals,
 } from "@/lib/sites/queries";
 
+export const instant = false;
+
 export const metadata: Metadata = {
   title: "Novo site · MindCare",
 };

@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, type ReactNode } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 
+import { ImageUploadField } from "@/app/(admin)/admin/media/image-upload-field";
 import {
   type ProfessionalActionState,
 } from "@/app/(admin)/admin/professionals/actions";
@@ -28,6 +29,7 @@ export function ProfessionalForm({
   action,
 }: ProfessionalFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
+  const [photoUrl, setPhotoUrl] = useState(professional?.photo_url ?? "");
 
   const educationText = (professional?.education ?? []).join("\n");
   const office = professional?.office_address ?? {};
@@ -143,14 +145,35 @@ export function ProfessionalForm({
           readOnly={readOnly}
           error={state.fieldErrors?.email?.[0]}
         />
-        <Field
-          label="URL da foto"
-          name="photo_url"
-          defaultValue={professional?.photo_url ?? ""}
-          readOnly={readOnly}
-          hint="Começa com https://"
-          error={state.fieldErrors?.photo_url?.[0]}
-        />
+        {professional?.id && !readOnly ? (
+          <div className="grid gap-2">
+            <ImageUploadField
+              label="Foto"
+              value={photoUrl}
+              target={{ kind: "professional", professionalId: professional.id }}
+              onChange={setPhotoUrl}
+            />
+            <input type="hidden" name="photo_url" value={photoUrl} />
+            {state.fieldErrors?.photo_url?.[0] ? (
+              <p className="text-sm text-red-700 dark:text-red-400">
+                {state.fieldErrors.photo_url[0]}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <Field
+            label="URL da foto"
+            name="photo_url"
+            defaultValue={professional?.photo_url ?? ""}
+            readOnly={readOnly}
+            hint={
+              professional?.id
+                ? "Começa com https://"
+                : "Salve o profissional para enviar arquivo; ou cole uma URL https://"
+            }
+            error={state.fieldErrors?.photo_url?.[0]}
+          />
+        )}
       </Section>
 
       <Section title="Conteúdo público">

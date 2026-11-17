@@ -8,6 +8,8 @@ import {
   professionalStatusLabel,
 } from "@/lib/professionals/schema";
 
+export const instant = false;
+
 export const metadata: Metadata = {
   title: "Profissionais · MindCare",
 };

@@ -10,21 +10,15 @@ import { ProfessionalForm } from "@/app/(admin)/admin/professionals/professional
 import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
 import { getProfessional } from "@/lib/professionals/queries";
 
+export const instant = false;
+
+export const metadata: Metadata = {
+  title: "Profissional · MindCare",
+};
+
 type PageProps = {
   params: Promise<{ id: string }>;
 };
-
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
-  const { id } = await params;
-  const professional = await getProfessional(id);
-  return {
-    title: professional
-      ? `${professional.full_name} · MindCare`
-      : "Profissional · MindCare",
-  };
-}
 
 export default async function ProfessionalDetailPage({ params }: PageProps) {
   const { id } = await params;

@@ -130,6 +130,7 @@ export function SiteSectionsEditor({
             </div>
 
             <SectionFields
+              siteId={siteId}
               moduleKey={section.module_key}
               content={section.content}
               settings={section.settings}

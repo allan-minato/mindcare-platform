@@ -3,6 +3,8 @@ import { Suspense, type ReactNode } from "react";
 import { AccessDenied, AdminHeader } from "@/app/(admin)/admin-shell";
 import { requireAdmin } from "@/lib/auth/admin";
 
+export const instant = false;
+
 export default function AdminGroupLayout({ children }: { children: ReactNode }) {
   return (
     <Suspense fallback={<AdminLoading />}>

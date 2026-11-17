@@ -1,8 +1,10 @@
 "use client";
 
+import { ImageUploadField } from "@/app/(admin)/admin/media/image-upload-field";
 import type { ModuleKey } from "@/modules/registry";
 
 type SectionFieldsProps = {
+  siteId: string;
   moduleKey: string;
   content: Record<string, unknown>;
   settings: Record<string, unknown>;
@@ -14,6 +16,7 @@ const inputClass =
   "w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700";
 
 export function SectionFields({
+  siteId,
   moduleKey,
   content,
   settings,
@@ -40,6 +43,14 @@ export function SectionFields({
             label="Selos"
             values={stringArray(content.badges)}
             onChange={(badges) => onContentChange({ ...content, badges })}
+          />
+          <ImageUploadField
+            label="Imagem"
+            value={stringValue(content.image_url)}
+            target={{ kind: "site", siteId }}
+            onChange={(image_url) =>
+              onContentChange({ ...content, image_url })
+            }
           />
         </div>
       );
@@ -81,6 +92,14 @@ export function SectionFields({
             value={stringValue(content.credential)}
             onChange={(credential) =>
               onContentChange({ ...content, credential })
+            }
+          />
+          <ImageUploadField
+            label="Imagem"
+            value={stringValue(content.image_url)}
+            target={{ kind: "site", siteId }}
+            onChange={(image_url) =>
+              onContentChange({ ...content, image_url })
             }
           />
         </div>
