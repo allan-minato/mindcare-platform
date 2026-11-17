@@ -60,7 +60,15 @@ export default async function ProfessionalDetailPage({ params }: PageProps) {
           ) : null}
         </div>
         {canWrite ? (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {professional.status !== "archived" ? (
+              <Link
+                href={`/admin/sites/new?professionalId=${professional.id}`}
+                className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium dark:border-zinc-700"
+              >
+                Criar site
+              </Link>
+            ) : null}
             {professional.status === "archived" ? (
               <form action={reactivate}>
                 <button
