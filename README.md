@@ -19,4 +19,4 @@ O schema, as políticas RLS e o fluxo de publicação estão em [docs/database.m
 
 ## MCP do Supabase
 
-A configuração do projeto está em `.cursor/mcp.json`, no servidor `mindcare`, e aponta para `uejagjwfvdhpfhpazjhi`. No Cursor, abra Settings → Tools & MCP, conecte `mindcare` e entre com a conta que criou o MindCare. O servidor `supabase` da configuração global continua no outro projeto.
+A configuração do projeto está em `.cursor/mcp.json`, no servidor `mindcare`, e aponta para `uejagjwfvdhpfhpazjhi`. No Cursor, abra Settings → Tools & MCP, conecte `mindcare` e entre com a conta que criou o MindCare. O servidor `supabase` da configuração global continua no outro projeto...
