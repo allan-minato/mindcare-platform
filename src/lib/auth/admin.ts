@@ -75,7 +75,7 @@ export async function requireAdminProfile(): Promise<AdminProfile> {
 export async function requireAdminRole(minRole: AdminRole): Promise<AdminProfile> {
   const admin = await requireAdminProfile();
   if (!hasMinRole(admin.role, minRole)) {
-    redirect("/admin/professionals");
+    redirect("/admin");
   }
   return admin;
 }

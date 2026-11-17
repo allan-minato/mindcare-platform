@@ -10,14 +10,22 @@ export default function AdminPage() {
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-3 px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Painel</h1>
       <p className="leading-7 text-zinc-600 dark:text-zinc-400">
-        Cadastre profissionais e, nas próximas etapas, os sites deles.
+        Cadastre profissionais e crie os sites com as seções do template.
       </p>
-      <Link
-        href="/admin/professionals"
-        className="text-sm font-medium underline underline-offset-4"
-      >
-        Ver profissionais
-      </Link>
+      <div className="flex flex-wrap gap-4">
+        <Link
+          href="/admin/professionals"
+          className="text-sm font-medium underline underline-offset-4"
+        >
+          Ver profissionais
+        </Link>
+        <Link
+          href="/admin/sites"
+          className="text-sm font-medium underline underline-offset-4"
+        >
+          Ver sites
+        </Link>
+      </div>
     </main>
   );
 }

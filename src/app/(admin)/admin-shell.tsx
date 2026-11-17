@@ -33,6 +33,12 @@ export function AdminHeader({ admin }: { admin: AdminProfile }) {
         >
           Profissionais
         </Link>
+        <Link
+          href="/admin/sites"
+          className="text-zinc-600 underline-offset-4 hover:underline dark:text-zinc-400"
+        >
+          Sites
+        </Link>
       </nav>
     </header>
   );
