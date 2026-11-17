@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { SiteDocument } from "@/lib/sites/document";
 import { renderAcolhedorSection } from "@/templates/acolhedor/sections";
 import { AcolhedorShell } from "@/templates/acolhedor/shell";
+import { homeSections } from "@/templates/shared";
 
 type AcolhedorTemplateProps = {
   document: SiteDocument;
@@ -13,9 +14,7 @@ export function AcolhedorTemplate({
   document,
   banner,
 }: AcolhedorTemplateProps) {
-  const home =
-    document.pages.find((page) => page.path === "/") ?? document.pages[0];
-  const sections = home?.sections ?? [];
+  const sections = homeSections(document);
 
   return (
     <AcolhedorShell document={document} banner={banner}>

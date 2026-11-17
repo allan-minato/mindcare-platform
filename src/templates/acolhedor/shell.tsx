@@ -1,11 +1,12 @@
 import { Fraunces, Source_Sans_3 } from "next/font/google";
-import type { ReactNode } from "react";
 
 import {
+  formatCouncil,
+  previewBannerCss,
   professionalDisplayName,
   whatsappHref,
-  type SiteDocument,
-} from "@/lib/sites/document";
+  type TemplateShellProps,
+} from "@/templates/shared";
 
 const display = Fraunces({
   subsets: ["latin"],
@@ -17,13 +18,11 @@ const body = Source_Sans_3({
   variable: "--font-acolhedor-body",
 });
 
-type ShellProps = {
-  document: SiteDocument;
-  banner?: ReactNode;
-  children: ReactNode;
-};
-
-export function AcolhedorShell({ document, banner, children }: ShellProps) {
+export function AcolhedorShell({
+  document,
+  banner,
+  children,
+}: TemplateShellProps) {
   const name = professionalDisplayName(document.professional);
   const whatsapp = whatsappHref(document.professional.whatsapp);
   const council = formatCouncil(document.professional);
@@ -32,7 +31,7 @@ export function AcolhedorShell({ document, banner, children }: ShellProps) {
     <div
       className={`${display.variable} ${body.variable} acolhedor-root min-h-full`}
     >
-      <style>{acolhedorCss}</style>
+      <style>{`${previewBannerCss}${acolhedorCss}`}</style>
       {banner}
       <header className="acolhedor-header">
         <div className="acolhedor-wrap acolhedor-header-inner">
@@ -75,17 +74,6 @@ export function AcolhedorShell({ document, banner, children }: ShellProps) {
       </footer>
     </div>
   );
-}
-
-function formatCouncil(
-  professional: SiteDocument["professional"],
-): string | null {
-  const council = professional.council?.toUpperCase();
-  const registration = professional.registration_number?.trim();
-  if (!council || !registration) {
-    return null;
-  }
-  return `${council} ${registration}`;
 }
 
 const acolhedorCss = `
@@ -302,14 +290,6 @@ const acolhedorCss = `
   text-decoration: none;
   margin-top: 0.5rem;
   width: fit-content;
-}
-.acolhedor-preview-banner {
-  background: #16352e;
-  color: #e8f4ef;
-  text-align: center;
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
-  padding: 0.55rem 1rem;
 }
 @media (min-width: 768px) {
   .acolhedor-nav { display: flex; }
