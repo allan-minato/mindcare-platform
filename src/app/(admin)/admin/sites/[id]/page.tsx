@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { SiteDomainsPanel } from "@/app/(admin)/admin/sites/site-domains-panel";
 import { SitePublishControls } from "@/app/(admin)/admin/sites/site-publish-controls";
 import { SiteSectionsEditor } from "@/app/(admin)/admin/sites/site-sections-editor";
 import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
@@ -115,6 +116,21 @@ export default async function SiteDetailPage({ params }: PageProps) {
             Página `/` não encontrada.
           </p>
         )}
+      </section>
+
+      <section className="grid gap-3">
+        <div className="grid gap-1">
+          <h2 className="text-lg font-medium">Domínios</h2>
+          <p className="text-sm text-zinc-500">
+            Cadastre o host do cliente e marque como verificado para o
+            snapshot público resolver pelo domínio personalizado.
+          </p>
+        </div>
+        <SiteDomainsPanel
+          siteId={site.id}
+          domains={site.domains}
+          canManage={canPublish}
+        />
       </section>
 
       <section className="grid gap-3">

@@ -2,6 +2,11 @@ import "server-only";
 
 import { requireAdmin } from "@/lib/auth/admin";
 import {
+  isDomainConfigurationStatus,
+  isDomainVerificationStatus,
+  type SiteDomain,
+} from "@/lib/sites/domains";
+import {
   type EligibleProfessional,
   type SiteDetail,
   type SiteListItem,
@@ -200,6 +205,7 @@ export async function getSite(id: string): Promise<SiteDetail | null> {
     supabase,
     row.live_publication_id,
   );
+  const domains = await listSiteDomains(id);
 
   return {
     id: row.id,
@@ -219,6 +225,7 @@ export async function getSite(id: string): Promise<SiteDetail | null> {
     published_at: publicationFields.published_at,
     created_at: row.created_at,
     updated_at: row.updated_at,
+    domains,
     home_page: page
       ? {
           id: page.id,
@@ -228,6 +235,48 @@ export async function getSite(id: string): Promise<SiteDetail | null> {
         }
       : null,
   };
+}
+
+export async function listSiteDomains(siteId: string): Promise<SiteDomain[]> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("site_domains")
+    .select(
+      "id, site_id, domain, is_primary, verification_status, configuration_status, verified_at, created_at, updated_at",
+    )
+    .eq("site_id", siteId)
+    .order("is_primary", { ascending: false })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error("Não foi possível carregar os domínios do site.");
+  }
+
+  return ((data ?? []) as Array<Record<string, unknown>>).flatMap((row) => {
+    const verification = String(row.verification_status ?? "");
+    const configuration = String(row.configuration_status ?? "");
+    if (
+      !isDomainVerificationStatus(verification) ||
+      !isDomainConfigurationStatus(configuration)
+    ) {
+      return [];
+    }
+    return [
+      {
+        id: String(row.id),
+        site_id: String(row.site_id),
+        domain: String(row.domain),
+        is_primary: Boolean(row.is_primary),
+        verification_status: verification,
+        configuration_status: configuration,
+        verified_at:
+          typeof row.verified_at === "string" ? row.verified_at : null,
+        created_at: String(row.created_at),
+        updated_at: String(row.updated_at),
+      },
+    ];
+  });
 }
 
 export async function listActiveTemplates(): Promise<SiteTemplateOption[]> {

@@ -41,6 +41,14 @@ export async function getPublishedByHost(
   const slug = extractSlugFromHost(hostname);
   const supabase = createAnonClient();
 
+  // Misses (pending/unpublished) still need a tag so admin verify/publish
+  // can invalidate via updateTag.
+  if (slug) {
+    cacheTag(`site:${slug}`);
+  } else {
+    cacheTag(`domain:${hostname}`);
+  }
+
   const { data, error } = slug
     ? await supabase.rpc("get_published_site_by_slug", { p_slug: slug })
     : await supabase.rpc("get_published_site_by_domain", {

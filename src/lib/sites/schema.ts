@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { SiteDomain } from "@/lib/sites/domains";
 import {
   isTemplateKey,
   type TemplateKey,
@@ -59,6 +60,7 @@ export type SiteDetail = {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+  domains: SiteDomain[];
   home_page: {
     id: string;
     path: string;
