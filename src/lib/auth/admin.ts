@@ -27,6 +27,12 @@ type AdminUserRow = {
   is_active: boolean;
 };
 
+const roleRank: Record<AdminRole, number> = {
+  editor: 0,
+  admin: 1,
+  super_admin: 2,
+};
+
 export const requireAdmin = cache(async (): Promise<AdminAccess> => {
   await connection();
   const supabase = await createClient();
@@ -57,6 +63,26 @@ export const requireAdmin = cache(async (): Promise<AdminAccess> => {
     },
   };
 });
+
+export async function requireAdminProfile(): Promise<AdminProfile> {
+  const access = await requireAdmin();
+  if (access.status === "denied") {
+    redirect("/admin");
+  }
+  return access.admin;
+}
+
+export async function requireAdminRole(minRole: AdminRole): Promise<AdminProfile> {
+  const admin = await requireAdminProfile();
+  if (!hasMinRole(admin.role, minRole)) {
+    redirect("/admin/professionals");
+  }
+  return admin;
+}
+
+export function hasMinRole(role: AdminRole, minRole: AdminRole) {
+  return roleRank[role] >= roleRank[minRole];
+}
 
 function isAdminRole(role: string): role is AdminRole {
   return adminRoles.some((adminRole) => adminRole === role);
