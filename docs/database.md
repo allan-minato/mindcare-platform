@@ -19,7 +19,7 @@ erDiagram
 
 | Tabela | Papel |
 | --- | --- |
-| `admin_users` | Equipe com acesso ao painel. `id` é o mesmo de `auth.users`. Papéis `editor`, `admin` e `super_admin` |
+| `admin_users` | Equipe com acesso ao painel. `id` é o mesmo de `auth.users`. Papéis `editor`, `admin` e `super_admin`. Coluna `email` espelha o Auth para listagem |
 | `professionals` | Cadastro do cliente: identidade, registro (CRP/CRM e RQE), contato, endereço, modalidades, status e notas internas |
 | `site_templates` | Catálogo dos templates do código: `acolhedor`, `minimalista` e `premium` |
 | `sites` | Site de um profissional: slug na plataforma, template, tema, SEO padrão, arquivamento e publicação no ar |
@@ -117,7 +117,8 @@ Quando o profissional ganhar login, entra uma tabela de vínculo entre `auth.use
 | `20261116031907` | `admin_users_and_roles` | Schema `private`, papéis, `admin_users`, `has_role` |
 | `20261116031946` | `professionals_and_sites` | Profissionais, templates, sites, domínios, páginas, seções e RLS |
 | `20261116032016` | `site_publications` | Snapshots, ponteiro de publicação e funções de prévia, publicação e leitura pública |
-| `20261117185749` | `site_media_bucket` | Bucket `site-media` (leitura pública; escrita `editor+`) |
+| `20261117185758` | `site_media_bucket` | Bucket `site-media` (leitura pública; escrita `editor+`) |
+| `20261117195703` | `admin_users_email` | Coluna `email` em `admin_users` para listagem da equipe |
 
 Os nomes dos arquivos usam as mesmas versões registradas no projeto remoto.
 
@@ -147,10 +148,10 @@ Para enviar ao remoto pela CLI, use `npx supabase link --project-ref uejagjwfvdh
 O Auth do projeto ainda não tem usuários. Depois de criar sua conta em Authentication → Users, rode como `postgres`:
 
 ```sql
-insert into public.admin_users (id, full_name, role)
-select id, 'Seu nome', 'super_admin'
+insert into public.admin_users (id, full_name, email, role)
+select id, 'Seu nome', lower(email), 'super_admin'
 from auth.users
 where email = 'seu-email@exemplo.com';
 ```
 
-Os próximos membros da equipe são criados pelo painel, por um `super_admin`.
+Os próximos membros da equipe são convidados em `/admin/team` por um `super_admin` (Edge Function `invite-admin`).

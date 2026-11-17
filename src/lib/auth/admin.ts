@@ -4,11 +4,20 @@ import { connection } from "next/server";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 
+import {
+  hasMinRole,
+  isAdminRole,
+  type AdminRole,
+} from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 
-const adminRoles = ["editor", "admin", "super_admin"] as const;
-
-export type AdminRole = (typeof adminRoles)[number];
+export type { AdminRole } from "@/lib/auth/roles";
+export {
+  adminRoleLabel,
+  adminRoles,
+  hasMinRole,
+  isAdminRole,
+} from "@/lib/auth/roles";
 
 export type AdminProfile = {
   id: string;
@@ -25,12 +34,6 @@ type AdminUserRow = {
   full_name: string;
   role: string;
   is_active: boolean;
-};
-
-const roleRank: Record<AdminRole, number> = {
-  editor: 0,
-  admin: 1,
-  super_admin: 2,
 };
 
 export const requireAdmin = cache(async (): Promise<AdminAccess> => {
@@ -78,23 +81,4 @@ export async function requireAdminRole(minRole: AdminRole): Promise<AdminProfile
     redirect("/admin");
   }
   return admin;
-}
-
-export function hasMinRole(role: AdminRole, minRole: AdminRole) {
-  return roleRank[role] >= roleRank[minRole];
-}
-
-function isAdminRole(role: string): role is AdminRole {
-  return adminRoles.some((adminRole) => adminRole === role);
-}
-
-export function adminRoleLabel(role: AdminRole) {
-  switch (role) {
-    case "editor":
-      return "Editor";
-    case "admin":
-      return "Admin";
-    case "super_admin":
-      return "Super admin";
-  }
 }
