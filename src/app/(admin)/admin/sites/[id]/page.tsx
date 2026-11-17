@@ -37,19 +37,33 @@ export default async function SiteDetailPage({ params }: PageProps) {
         >
           Voltar
         </Link>
-        <h1 className="text-3xl font-semibold tracking-tight">{site.name}</h1>
-        <p className="text-sm text-zinc-500">
-          {site.slug}
-          {" · "}
-          {templateLabel(site.template_key)}
-          {" · "}
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="grid gap-2">
+            <h1 className="text-3xl font-semibold tracking-tight">
+              {site.name}
+            </h1>
+            <p className="text-sm text-zinc-500">
+              {site.slug}
+              {" · "}
+              {templateLabel(site.template_key)}
+              {" · "}
+              <Link
+                href={`/admin/professionals/${site.professional_id}`}
+                className="underline-offset-4 hover:underline"
+              >
+                {site.professional_name}
+              </Link>
+            </p>
+          </div>
           <Link
-            href={`/admin/professionals/${site.professional_id}`}
-            className="underline-offset-4 hover:underline"
+            href={`/preview/${site.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
           >
-            {site.professional_name}
+            Ver prévia
           </Link>
-        </p>
+        </div>
       </div>
 
       <section className="grid gap-3">
