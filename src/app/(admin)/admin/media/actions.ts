@@ -1,6 +1,8 @@
 "use server";
 
 import { requireAdmin } from "@/lib/auth/admin";
+import { requireProfessionalProfile } from "@/lib/auth/professional";
+import { requireSiteEditor } from "@/lib/auth/site-access";
 import { uploadImageFile } from "@/lib/media/upload";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,11 +16,11 @@ export async function uploadSiteImage(
   _state: MediaUploadState,
   formData: FormData,
 ): Promise<MediaUploadState> {
-  await requireAdmin();
-
   if (!isUuid(siteId)) {
     return { error: "Site inválido." };
   }
+
+  await requireSiteEditor(siteId);
 
   const supabase = await createClient();
   const { data: site, error } = await supabase
@@ -49,10 +51,16 @@ export async function uploadProfessionalImage(
   _state: MediaUploadState,
   formData: FormData,
 ): Promise<MediaUploadState> {
-  await requireAdmin();
-
   if (!isUuid(professionalId)) {
     return { error: "Profissional inválido." };
+  }
+
+  const adminAccess = await requireAdmin();
+  if (adminAccess.status === "denied") {
+    const profile = await requireProfessionalProfile();
+    if (profile.professionalId !== professionalId) {
+      return { error: "Sem permissão para este profissional." };
+    }
   }
 
   const supabase = await createClient();

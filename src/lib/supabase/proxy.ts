@@ -43,21 +43,52 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (path.startsWith("/admin") && !user) {
+  if ((path.startsWith("/admin") || path.startsWith("/app")) && !user) {
     return redirectKeepingSession(request, "/login", supabaseResponse);
   }
 
   if (path === "/login" && user) {
-    return redirectKeepingSession(request, "/admin", supabaseResponse);
+    const destination = await resolveProxyHome(supabase, user.id);
+    return redirectKeepingSession(request, destination, supabaseResponse);
   }
 
   return supabaseResponse;
+}
+
+async function resolveProxyHome(
+  supabase: ReturnType<typeof createServerClient>,
+  userId: string,
+) {
+  const { data: admin } = await supabase
+    .from("admin_users")
+    .select("id")
+    .eq("id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (admin) {
+    return "/admin";
+  }
+
+  const { data: professional } = await supabase
+    .from("professional_users")
+    .select("auth_user_id")
+    .eq("auth_user_id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (professional) {
+    return "/app";
+  }
+
+  return "/login";
 }
 
 function shouldRewriteToPublicSite(path: string, hostHeader: string): boolean {
   if (
     path.startsWith("/_public") ||
     path.startsWith("/admin") ||
+    path.startsWith("/app") ||
     path.startsWith("/login") ||
     path.startsWith("/preview") ||
     path.startsWith("/_next") ||

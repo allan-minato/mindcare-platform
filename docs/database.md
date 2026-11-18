@@ -7,6 +7,8 @@ Projeto Supabase `uejagjwfvdhpfhpazjhi`, PostgreSQL 17. O schema é criado pelas
 ```mermaid
 erDiagram
   auth_users ||--o| admin_users : "perfil da equipe"
+  auth_users ||--o| professional_users : "portal do cliente"
+  professional_users }o--|| professionals : "vincula"
   admin_users ||--o{ site_publications : "published_by"
   professionals ||--o{ sites : "possui"
   site_templates ||--o{ sites : "template_key"
@@ -20,6 +22,7 @@ erDiagram
 | Tabela | Papel |
 | --- | --- |
 | `admin_users` | Equipe com acesso ao painel. `id` é o mesmo de `auth.users`. Papéis `editor`, `admin` e `super_admin`. Coluna `email` espelha o Auth para listagem |
+| `professional_users` | Vínculo Auth ↔ professional para o portal `/app` |
 | `professionals` | Cadastro do cliente: identidade, registro (CRP/CRM e RQE), contato, endereço, modalidades, status e notas internas |
 | `site_templates` | Catálogo dos templates do código: `acolhedor`, `minimalista` e `premium` |
 | `sites` | Site de um profissional: slug na plataforma, template, tema, SEO padrão, arquivamento e publicação no ar |
@@ -106,9 +109,9 @@ As funções de leitura pública devolvem `{ version, published_at, primary_doma
 
 "`editor`" significa `editor` ou acima; os papéis são hierárquicos.
 
-### Acesso futuro do profissional
+### Acesso do profissional (portal)
 
-Quando o profissional ganhar login, entra uma tabela de vínculo entre `auth.users` e `professionals`. As políticas de `sites`, `site_pages` e `site_sections` passam a aceitar também quem estiver vinculado ao `professional_id` do site. O restante do schema não muda.
+Tabela `professional_users` vincula `auth.users` a um `professionals` (1:1). O login redireciona para `/app`. Policies extras em `professionals`, `sites`, `site_pages`, `site_sections` (e leitura de domínios/publicações/templates) aceitam o dono; publicar e gerir domínios continuam só com a equipe. Convite: Edge Function `invite-professional` (admin+).
 
 ## Migrations
 
@@ -119,6 +122,7 @@ Quando o profissional ganhar login, entra uma tabela de vínculo entre `auth.use
 | `20261116032016` | `site_publications` | Snapshots, ponteiro de publicação e funções de prévia, publicação e leitura pública |
 | `20261117185758` | `site_media_bucket` | Bucket `site-media` (leitura pública; escrita `editor+`) |
 | `20261117195703` | `admin_users_email` | Coluna `email` em `admin_users` para listagem da equipe |
+| `20261117200753` | `professional_users` | Portal do profissional: vínculo Auth, helpers e RLS |
 
 Os nomes dos arquivos usam as mesmas versões registradas no projeto remoto.
 

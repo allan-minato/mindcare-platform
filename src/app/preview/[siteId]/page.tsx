@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { requireAdminProfile } from "@/lib/auth/admin";
+import { requireSiteEditor } from "@/lib/auth/site-access";
 import { getPreviewDocument } from "@/lib/sites/preview";
 import { TemplateRenderer } from "@/templates/render";
 
@@ -24,8 +24,8 @@ type PageProps = {
 };
 
 export default async function PreviewSitePage({ params }: PageProps) {
-  await requireAdminProfile();
   const { siteId } = await params;
+  await requireSiteEditor(siteId);
   const document = await getPreviewDocument(siteId);
 
   if (!document) {

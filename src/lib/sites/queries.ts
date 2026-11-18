@@ -80,13 +80,31 @@ type PublicationRow = {
 
 export async function listSites(): Promise<SiteListItem[]> {
   await requireAdmin();
+  return loadSiteList();
+}
+
+export async function listMySites(
+  professionalId: string,
+): Promise<SiteListItem[]> {
+  return loadSiteList(professionalId);
+}
+
+async function loadSiteList(
+  professionalId?: string,
+): Promise<SiteListItem[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("sites")
     .select(
       "id, name, slug, template_key, professional_id, live_publication_id, created_at, updated_at, professionals(full_name, professional_name)",
     )
     .order("updated_at", { ascending: false });
+
+  if (professionalId) {
+    query = query.eq("professional_id", professionalId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw new Error("Não foi possível carregar os sites.");
@@ -129,8 +147,13 @@ export async function listSites(): Promise<SiteListItem[]> {
 }
 
 export async function getSite(id: string): Promise<SiteDetail | null> {
-  await requireAdmin();
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return null;
+  }
   const { data, error } = await supabase
     .from("sites")
     .select(
@@ -238,8 +261,13 @@ export async function getSite(id: string): Promise<SiteDetail | null> {
 }
 
 export async function listSiteDomains(siteId: string): Promise<SiteDomain[]> {
-  await requireAdmin();
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return [];
+  }
   const { data, error } = await supabase
     .from("site_domains")
     .select(

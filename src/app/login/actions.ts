@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { resolvePostLoginPath } from "@/lib/auth/professional";
 import { createClient } from "@/lib/supabase/server";
 
 export type SignInState = {
@@ -26,7 +27,13 @@ export async function signIn(
     return { error: "E-mail ou senha inválidos." };
   }
 
-  redirect("/admin");
+  const destination = await resolvePostLoginPath();
+  if (destination === "/login") {
+    await supabase.auth.signOut();
+    return { error: "Esta conta não tem acesso ao painel nem ao portal." };
+  }
+
+  redirect(destination);
 }
 
 export async function signOut() {

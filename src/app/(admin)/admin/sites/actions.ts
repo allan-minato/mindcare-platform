@@ -3,7 +3,8 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { requireAdmin, requireAdminRole } from "@/lib/auth/admin";
+import { requireAdminRole } from "@/lib/auth/admin";
+import { requireSiteEditor } from "@/lib/auth/site-access";
 import {
   parseSiteCreateForm,
   type SectionEditorInput,
@@ -121,7 +122,7 @@ export async function updateSiteSections(
   _state: SectionsActionState,
   formData: FormData,
 ): Promise<SectionsActionState> {
-  await requireAdmin();
+  const access = await requireSiteEditor(siteId);
 
   const raw = String(formData.get("sections") ?? "");
   let inputs: SectionEditorInput[];
@@ -220,7 +221,11 @@ export async function updateSiteSections(
     }
   }
 
-  redirect(`/admin/sites/${siteId}`);
+  redirect(
+    access.kind === "owner"
+      ? `/app/sites/${siteId}`
+      : `/admin/sites/${siteId}`,
+  );
 }
 
 export type PublishActionState = {

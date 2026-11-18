@@ -15,6 +15,8 @@ import {
 type ProfessionalFormProps = {
   professional?: Professional;
   readOnly?: boolean;
+  /** Esconde status e notas internas; envia valores atuais em campos ocultos. */
+  portalMode?: boolean;
   action: (
     state: ProfessionalActionState,
     formData: FormData,
@@ -26,6 +28,7 @@ const initialState: ProfessionalActionState = {};
 export function ProfessionalForm({
   professional,
   readOnly = false,
+  portalMode = false,
   action,
 }: ProfessionalFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
@@ -60,24 +63,32 @@ export function ProfessionalForm({
           readOnly={readOnly}
           error={state.fieldErrors?.professional_name?.[0]}
         />
-        <div className="grid gap-1.5">
-          <label htmlFor="status" className="text-sm font-medium">
-            Status
-          </label>
-          <select
-            id="status"
+        {portalMode ? (
+          <input
+            type="hidden"
             name="status"
-            defaultValue={professional?.status ?? "active"}
-            disabled={readOnly}
-            className={inputClass}
-          >
-            {professionalStatuses.map((status) => (
-              <option key={status} value={status}>
-                {professionalStatusLabel(status)}
-              </option>
-            ))}
-          </select>
-        </div>
+            value={professional?.status ?? "active"}
+          />
+        ) : (
+          <div className="grid gap-1.5">
+            <label htmlFor="status" className="text-sm font-medium">
+              Status
+            </label>
+            <select
+              id="status"
+              name="status"
+              defaultValue={professional?.status ?? "active"}
+              disabled={readOnly}
+              className={inputClass}
+            >
+              {professionalStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {professionalStatusLabel(status)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </Section>
 
       <Section title="Registro">
@@ -282,29 +293,33 @@ export function ProfessionalForm({
         />
       </Section>
 
-      <Section title="Uso interno da equipe">
-        <div className="grid gap-1.5">
-          <label htmlFor="internal_notes" className="text-sm font-medium">
-            Nota interna
-          </label>
-          <textarea
-            id="internal_notes"
-            name="internal_notes"
-            rows={4}
-            defaultValue={professional?.internal_notes ?? ""}
-            readOnly={readOnly}
-            className={inputClass}
-          />
-          <p className="text-sm text-zinc-500">
-            Nunca entra no site publicado.
-          </p>
-          {state.fieldErrors?.internal_notes?.[0] ? (
-            <p className="text-sm text-red-700 dark:text-red-400">
-              {state.fieldErrors.internal_notes[0]}
+      {portalMode ? (
+        <input type="hidden" name="internal_notes" value="" />
+      ) : (
+        <Section title="Uso interno da equipe">
+          <div className="grid gap-1.5">
+            <label htmlFor="internal_notes" className="text-sm font-medium">
+              Nota interna
+            </label>
+            <textarea
+              id="internal_notes"
+              name="internal_notes"
+              rows={4}
+              defaultValue={professional?.internal_notes ?? ""}
+              readOnly={readOnly}
+              className={inputClass}
+            />
+            <p className="text-sm text-zinc-500">
+              Nunca entra no site publicado.
             </p>
-          ) : null}
-        </div>
-      </Section>
+            {state.fieldErrors?.internal_notes?.[0] ? (
+              <p className="text-sm text-red-700 dark:text-red-400">
+                {state.fieldErrors.internal_notes[0]}
+              </p>
+            ) : null}
+          </div>
+        </Section>
+      )}
 
       {!readOnly ? (
         <button

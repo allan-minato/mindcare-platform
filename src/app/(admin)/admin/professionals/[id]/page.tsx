@@ -6,9 +6,13 @@ import {
   setProfessionalStatus,
   updateProfessional,
 } from "@/app/(admin)/admin/professionals/actions";
+import { InviteAccessPanel } from "@/app/(admin)/admin/professionals/invite-access-panel";
 import { ProfessionalForm } from "@/app/(admin)/admin/professionals/professional-form";
 import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
-import { getProfessional } from "@/lib/professionals/queries";
+import {
+  getProfessional,
+  getProfessionalPortalAccess,
+} from "@/lib/professionals/queries";
 
 export const instant = false;
 
@@ -29,6 +33,10 @@ export default async function ProfessionalDetailPage({ params }: PageProps) {
   if (!professional) {
     notFound();
   }
+
+  const portalAccess = canWrite
+    ? await getProfessionalPortalAccess(professional.id)
+    : null;
 
   const action = updateProfessional.bind(null, professional.id);
   const archive = setProfessionalStatus.bind(null, professional.id, "archived");
@@ -85,6 +93,14 @@ export default async function ProfessionalDetailPage({ params }: PageProps) {
           </div>
         ) : null}
       </div>
+
+      {canWrite ? (
+        <InviteAccessPanel
+          professionalId={professional.id}
+          defaultEmail={professional.email}
+          access={portalAccess}
+        />
+      ) : null}
 
       <ProfessionalForm
         professional={professional}

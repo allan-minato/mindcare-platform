@@ -1,6 +1,6 @@
 import "server-only";
 
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireSiteEditor } from "@/lib/auth/site-access";
 import {
   parseSiteDocument,
   type SiteDocument,
@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 export async function getPreviewDocument(
   siteId: string,
 ): Promise<SiteDocument | null> {
-  await requireAdmin();
+  await requireSiteEditor(siteId);
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("preview_site", {
     p_site_id: siteId,
