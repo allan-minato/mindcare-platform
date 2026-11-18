@@ -7,6 +7,10 @@ import { supabaseCredentials } from "@/lib/supabase/public-env";
 export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const hostHeader = request.headers.get("host") ?? request.nextUrl.host;
+  // Server Actions POSTam na rota atual. Um redirect HTTP aqui devolve
+  // text/html e o cliente quebra com "unexpected response was received".
+  const isServerAction =
+    request.method === "POST" && request.headers.has("next-action");
 
   if (shouldRewriteToPublicSite(path, hostHeader)) {
     const rewriteUrl = request.nextUrl.clone();
@@ -42,6 +46,10 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (isServerAction) {
+    return supabaseResponse;
+  }
 
   if ((path.startsWith("/admin") || path.startsWith("/app")) && !user) {
     return redirectKeepingSession(request, "/login", supabaseResponse);

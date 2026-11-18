@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { resolvePostLoginPath } from "@/lib/auth/professional";
@@ -33,11 +34,13 @@ export async function signIn(
     return { error: "Esta conta não tem acesso ao painel nem ao portal." };
   }
 
+  revalidatePath("/", "layout");
   redirect(destination);
 }
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  revalidatePath("/", "layout");
   redirect("/login");
 }

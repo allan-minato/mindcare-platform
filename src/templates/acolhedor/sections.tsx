@@ -71,53 +71,61 @@ function HeroSection({ section, document }: SectionProps) {
   const support =
     content.support.trim() ||
     "Acompanhamento psicológico com escuta atenta e presença.";
+  const imageUrl = content.image_url || document.professional.photo_url;
 
   return (
     <section id={section.key} className="acolhedor-hero">
       <div className="acolhedor-wrap acolhedor-hero-grid">
         <div>
-          <p className="acolhedor-kicker" style={{ color: "#c9e6dc" }}>
-            Atendimento clínico
-          </p>
+          <p className="acolhedor-kicker">Atendimento clínico</p>
           <h1 className="acolhedor-title">{headline}</h1>
           <p className="acolhedor-lead">{support}</p>
-          {content.badges.length > 0 ? (
-            <div className="acolhedor-hero-badges">
-              {content.badges.map((badge) => (
-                <span key={badge} className="acolhedor-badge">
-                  {badge}
-                </span>
-              ))}
-            </div>
-          ) : null}
-          {whatsapp ? (
-            <p style={{ marginTop: "1.75rem" }}>
+          <div className="acolhedor-hero-actions">
+            {whatsapp ? (
               <a
                 href={whatsapp}
-                className="acolhedor-button"
+                className="acolhedor-btn"
                 target="_blank"
                 rel="noreferrer"
-                style={{ background: "#fff", color: "#1f4d42" }}
               >
-                Agendar pelo WhatsApp
+                Entrar em contato
               </a>
-            </p>
+            ) : null}
+            <a
+              href="#servicos"
+              className={`acolhedor-btn${whatsapp ? " acolhedor-btn-ghost" : ""}`}
+            >
+              Conhecer serviços
+            </a>
+          </div>
+          {content.badges.length > 0 ? (
+            <div className="acolhedor-hero-badges">
+              {content.badges.map((badge) => {
+                const [label, ...rest] = badge.split(/[:·\-–—]/);
+                const detail = rest.join(" ").trim();
+                return (
+                  <div key={badge} className="acolhedor-badge">
+                    <span className="acolhedor-badge-label">
+                      {label.trim() || badge}
+                    </span>
+                    {detail ? (
+                      <span className="acolhedor-badge-detail">{detail}</span>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
           ) : null}
         </div>
-        {content.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={content.image_url}
-            alt=""
-            className="acolhedor-media"
-          />
-        ) : document.professional.photo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={document.professional.photo_url}
-            alt={name}
-            className="acolhedor-media"
-          />
+        {imageUrl ? (
+          <div className="acolhedor-media-frame">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt={content.image_url ? "" : name}
+              className="acolhedor-media"
+            />
+          </div>
         ) : null}
       </div>
     </section>
@@ -130,18 +138,17 @@ function RecognitionSection({ section }: SectionProps) {
     return null;
   }
   return (
-    <section id={section.key} className="acolhedor-section">
+    <section id={section.key} className="acolhedor-section acolhedor-section-dark">
       <div className="acolhedor-wrap">
+        <p className="acolhedor-kicker">Reconhecimento</p>
         {content.title ? (
-          <h2 className="acolhedor-title">{content.title}</h2>
+          <h2 className="acolhedor-title acolhedor-title-wide">{content.title}</h2>
         ) : null}
-        <ul className="acolhedor-list acolhedor-grid-3">
+        <ul className="acolhedor-list acolhedor-list-plain">
           {content.items.map((item) => (
             <li key={`${item.title}-${item.detail}`}>
-              <p className="acolhedor-item-title">{item.title}</p>
-              {item.detail ? (
-                <p className="acolhedor-item-body">{item.detail}</p>
-              ) : null}
+              <strong>{item.title}</strong>
+              {item.detail ? ` — ${item.detail}` : null}
             </li>
           ))}
         </ul>
@@ -158,7 +165,18 @@ function AboutSection({ section }: SectionProps) {
   return (
     <section id={section.key} className="acolhedor-section">
       <div className="acolhedor-wrap acolhedor-about-grid">
+        {content.image_url ? (
+          <div className="acolhedor-about-visual">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={content.image_url}
+              alt=""
+              className="acolhedor-media"
+            />
+          </div>
+        ) : null}
         <div>
+          <p className="acolhedor-kicker">Sobre</p>
           {content.title ? (
             <h2 className="acolhedor-title">{content.title}</h2>
           ) : null}
@@ -167,14 +185,6 @@ function AboutSection({ section }: SectionProps) {
             <span className="acolhedor-credential">{content.credential}</span>
           ) : null}
         </div>
-        {content.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={content.image_url}
-            alt=""
-            className="acolhedor-media"
-          />
-        ) : null}
       </div>
     </section>
   );
@@ -182,31 +192,55 @@ function AboutSection({ section }: SectionProps) {
 
 function ApproachSection({ section }: SectionProps) {
   const content = approachContentSchema.parse(section.content ?? {});
+  if (!content.title && content.pillars.length === 0) {
+    return null;
+  }
   return (
-    <TitleItemsSection
-      id={section.key}
-      title={content.title}
-      items={content.pillars.map((item) => ({
-        title: item.title,
-        body: item.body,
-      }))}
-      columns="3"
-    />
+    <section id={section.key} className="acolhedor-section acolhedor-section-warm">
+      <div className="acolhedor-wrap">
+        <p className="acolhedor-kicker">Abordagem</p>
+        {content.title ? (
+          <h2 className="acolhedor-title">{content.title}</h2>
+        ) : null}
+        <ul className="acolhedor-list acolhedor-list-rows">
+          {content.pillars.map((item) => (
+            <li key={`${item.title}-${item.body}`}>
+              <p className="acolhedor-item-title">{item.title}</p>
+              {item.body ? (
+                <p className="acolhedor-item-body">{item.body}</p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
 
 function ServicesSection({ section }: SectionProps) {
   const content = servicesContentSchema.parse(section.content ?? {});
+  if (!content.title && content.items.length === 0) {
+    return null;
+  }
   return (
-    <TitleItemsSection
-      id={section.key}
-      title={content.title}
-      items={content.items.map((item) => ({
-        title: item.title,
-        body: item.body,
-      }))}
-      columns="2"
-    />
+    <section id={section.key} className="acolhedor-section acolhedor-section-dark">
+      <div className="acolhedor-wrap">
+        <p className="acolhedor-kicker">Serviços</p>
+        {content.title ? (
+          <h2 className="acolhedor-title acolhedor-title-wide">{content.title}</h2>
+        ) : null}
+        <ul className="acolhedor-list acolhedor-list-cards acolhedor-grid-2">
+          {content.items.map((item) => (
+            <li key={`${item.title}-${item.body}`}>
+              <p className="acolhedor-item-title">{item.title}</p>
+              {item.body ? (
+                <p className="acolhedor-item-body">{item.body}</p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
 
@@ -219,17 +253,18 @@ function SpecialtiesSection({ section }: SectionProps) {
   return (
     <section id={section.key} className="acolhedor-section">
       <div className="acolhedor-wrap">
+        <p className="acolhedor-kicker">Especialidades</p>
         {content.title ? (
           <h2 className="acolhedor-title">{content.title}</h2>
         ) : null}
         {settings.display === "cards" ? (
-          <ul className="acolhedor-list acolhedor-grid-3">
+          <div className="acolhedor-specialty-grid">
             {content.items.map((item) => (
-              <li key={item}>
-                <p className="acolhedor-item-title">{item}</p>
-              </li>
+              <div key={item} className="acolhedor-specialty">
+                {item}
+              </div>
             ))}
-          </ul>
+          </div>
         ) : (
           <div className="acolhedor-tags">
             {content.items.map((item) => (
@@ -246,16 +281,28 @@ function SpecialtiesSection({ section }: SectionProps) {
 
 function HowItWorksSection({ section }: SectionProps) {
   const content = howItWorksContentSchema.parse(section.content ?? {});
+  if (!content.title && content.steps.length === 0) {
+    return null;
+  }
   return (
-    <TitleItemsSection
-      id={section.key}
-      title={content.title}
-      items={content.steps.map((item, index) => ({
-        title: `${index + 1}. ${item.title}`,
-        body: item.body,
-      }))}
-      columns="3"
-    />
+    <section id={section.key} className="acolhedor-section acolhedor-section-warm">
+      <div className="acolhedor-wrap">
+        <p className="acolhedor-kicker">Como funciona</p>
+        {content.title ? (
+          <h2 className="acolhedor-title">{content.title}</h2>
+        ) : null}
+        <ol className="acolhedor-list acolhedor-steps">
+          {content.steps.map((item) => (
+            <li key={`${item.title}-${item.body}`}>
+              <p className="acolhedor-item-title">{item.title}</p>
+              {item.body ? (
+                <p className="acolhedor-item-body">{item.body}</p>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
   );
 }
 
@@ -269,7 +316,8 @@ function LocationSection({ section }: SectionProps) {
   );
   return (
     <section id={section.key} className="acolhedor-section">
-      <div className="acolhedor-wrap">
+      <div className="acolhedor-wrap-narrow">
+        <p className="acolhedor-kicker">Atendimento</p>
         {content.title ? (
           <h2 className="acolhedor-title">{content.title}</h2>
         ) : null}
@@ -294,8 +342,9 @@ function AudienceSection({ section }: SectionProps) {
     return null;
   }
   return (
-    <section id={section.key} className="acolhedor-section">
-      <div className="acolhedor-wrap">
+    <section id={section.key} className="acolhedor-section acolhedor-section-warm">
+      <div className="acolhedor-wrap-narrow">
+        <p className="acolhedor-kicker">Para quem</p>
         {content.title ? (
           <h2 className="acolhedor-title">{content.title}</h2>
         ) : null}
@@ -310,31 +359,39 @@ function ContactSection({ section, document }: SectionProps) {
   const whatsapp = whatsappHref(document.professional.whatsapp);
   const email = document.professional.email?.trim();
   return (
-    <section id={section.key} className="acolhedor-section">
+    <section id={section.key} className="acolhedor-cta">
       <div className="acolhedor-wrap">
-        <h2 className="acolhedor-title">
-          {content.title.trim() || "Contato"}
-        </h2>
-        {content.city ? (
-          <p className="acolhedor-lead">{content.city}</p>
-        ) : null}
-        {content.note ? <p className="acolhedor-body">{content.note}</p> : null}
-        <div className="acolhedor-tags" style={{ marginTop: "1.75rem" }}>
-          {whatsapp ? (
-            <a
-              href={whatsapp}
-              className="acolhedor-button"
-              target="_blank"
-              rel="noreferrer"
-            >
-              WhatsApp
-            </a>
+        <div className="acolhedor-cta-inner">
+          <p className="acolhedor-kicker">Vamos conversar</p>
+          <h2 className="acolhedor-title">
+            {content.title.trim() || "O primeiro passo pode ser agora"}
+          </h2>
+          {content.city ? (
+            <p className="acolhedor-lead">{content.city}</p>
           ) : null}
-          {email ? (
-            <a href={`mailto:${email}`} className="acolhedor-tag">
-              {email}
-            </a>
+          {content.note ? (
+            <p className="acolhedor-body">{content.note}</p>
           ) : null}
+          <div className="acolhedor-cta-actions">
+            {whatsapp ? (
+              <a
+                href={whatsapp}
+                className="acolhedor-btn acolhedor-btn-light"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Entrar em contato
+              </a>
+            ) : null}
+            {email ? (
+              <a
+                href={`mailto:${email}`}
+                className="acolhedor-btn acolhedor-btn-on-dark"
+              >
+                {email}
+              </a>
+            ) : null}
+          </div>
         </div>
       </div>
     </section>
@@ -349,10 +406,11 @@ function EducationSection({ section }: SectionProps) {
   return (
     <section id={section.key} className="acolhedor-section">
       <div className="acolhedor-wrap">
+        <p className="acolhedor-kicker">Formação</p>
         {content.title ? (
           <h2 className="acolhedor-title">{content.title}</h2>
         ) : null}
-        <ul className="acolhedor-list">
+        <ul className="acolhedor-list acolhedor-list-rows">
           {content.items.map((item) => (
             <li key={item}>
               <p className="acolhedor-item-title">{item}</p>
@@ -370,53 +428,17 @@ function FaqSection({ section }: SectionProps) {
     return null;
   }
   return (
-    <section id={section.key} className="acolhedor-section">
+    <section id={section.key} className="acolhedor-section acolhedor-section-warm">
       <div className="acolhedor-wrap">
+        <p className="acolhedor-kicker">Dúvidas</p>
         {content.title ? (
           <h2 className="acolhedor-title">{content.title}</h2>
         ) : null}
-        <ul className="acolhedor-list">
+        <ul className="acolhedor-list acolhedor-list-rows">
           {content.items.map((item) => (
             <li key={item.question}>
               <p className="acolhedor-item-title">{item.question}</p>
               <p className="acolhedor-item-body">{item.answer}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-function TitleItemsSection({
-  id,
-  title,
-  items,
-  columns,
-}: {
-  id: string;
-  title: string;
-  items: Array<{ title: string; body: string }>;
-  columns: "2" | "3";
-}) {
-  if (!title && items.length === 0) {
-    return null;
-  }
-  return (
-    <section id={id} className="acolhedor-section">
-      <div className="acolhedor-wrap">
-        {title ? <h2 className="acolhedor-title">{title}</h2> : null}
-        <ul
-          className={`acolhedor-list ${
-            columns === "3" ? "acolhedor-grid-3" : "acolhedor-grid-2"
-          }`}
-        >
-          {items.map((item) => (
-            <li key={`${item.title}-${item.body}`}>
-              <p className="acolhedor-item-title">{item.title}</p>
-              {item.body ? (
-                <p className="acolhedor-item-body">{item.body}</p>
-              ) : null}
             </li>
           ))}
         </ul>
