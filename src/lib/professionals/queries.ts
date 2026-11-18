@@ -1,6 +1,7 @@
 import "server-only";
 
 import { requireAdmin } from "@/lib/auth/admin";
+import { requireProfessionalProfile } from "@/lib/auth/professional";
 import {
   type AttendanceMode,
   type Professional,
@@ -59,6 +60,49 @@ export async function getProfessional(
   id: string,
 ): Promise<Professional | null> {
   await requireAdmin();
+  return loadProfessionalById(id);
+}
+
+export async function getMyProfessional(): Promise<Professional | null> {
+  const profile = await requireProfessionalProfile();
+  return loadProfessionalById(profile.professionalId);
+}
+
+export type ProfessionalPortalAccess = {
+  email: string;
+  is_active: boolean;
+  invited_at: string;
+};
+
+export async function getProfessionalPortalAccess(
+  professionalId: string,
+): Promise<ProfessionalPortalAccess | null> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("professional_users")
+    .select("email, is_active, invited_at")
+    .eq("professional_id", professionalId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error("Não foi possível carregar o acesso do portal.");
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return {
+    email: data.email,
+    is_active: data.is_active,
+    invited_at: data.invited_at,
+  };
+}
+
+async function loadProfessionalById(
+  id: string,
+): Promise<Professional | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("professionals")

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { SiteDomain } from "@/lib/sites/domains";
 import {
   isTemplateKey,
   type TemplateKey,
@@ -20,6 +21,9 @@ export type SiteListItem = {
   template_key: TemplateKey;
   professional_id: string;
   professional_name: string;
+  live_publication_id: string | null;
+  published_version: number | null;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -30,6 +34,15 @@ export type SiteSection = {
   section_key: string;
   position: number;
   is_visible: boolean;
+  content: Record<string, unknown>;
+  settings: Record<string, unknown>;
+};
+
+export type SectionEditorInput = {
+  id: string;
+  is_visible: boolean;
+  content: Record<string, unknown>;
+  settings: Record<string, unknown>;
 };
 
 export type SiteDetail = {
@@ -42,8 +55,12 @@ export type SiteDetail = {
   theme: Record<string, unknown>;
   seo: Record<string, unknown>;
   archived_at: string | null;
+  live_publication_id: string | null;
+  published_version: number | null;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
+  domains: SiteDomain[];
   home_page: {
     id: string;
     path: string;

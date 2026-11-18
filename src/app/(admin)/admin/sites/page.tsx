@@ -5,6 +5,8 @@ import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
 import { listSites } from "@/lib/sites/queries";
 import { templateLabel } from "@/lib/templates/registry";
 
+export const instant = false;
+
 export const metadata: Metadata = {
   title: "Sites · MindCare",
 };
@@ -43,12 +45,19 @@ export default async function SitesPage() {
               className="flex items-center justify-between gap-4 py-4"
             >
               <div className="grid gap-1">
-                <Link
-                  href={`/admin/sites/${site.id}`}
-                  className="font-medium underline-offset-4 hover:underline"
-                >
-                  {site.name}
-                </Link>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/admin/sites/${site.id}`}
+                    className="font-medium underline-offset-4 hover:underline"
+                  >
+                    {site.name}
+                  </Link>
+                  {site.live_publication_id ? (
+                    <span className="text-xs font-medium tracking-wide text-emerald-700 dark:text-emerald-400">
+                      No ar
+                    </span>
+                  ) : null}
+                </div>
                 <p className="text-sm text-zinc-500">
                   {site.slug}
                   {" · "}

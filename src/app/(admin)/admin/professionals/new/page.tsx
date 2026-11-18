@@ -5,6 +5,8 @@ import { createProfessional } from "@/app/(admin)/admin/professionals/actions";
 import { ProfessionalForm } from "@/app/(admin)/admin/professionals/professional-form";
 import { requireAdminRole } from "@/lib/auth/admin";
 
+export const instant = false;
+
 export const metadata: Metadata = {
   title: "Novo profissional · MindCare",
 };

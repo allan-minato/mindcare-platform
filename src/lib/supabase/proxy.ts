@@ -1,9 +1,21 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isPublicSiteHost, normalizeHost } from "@/lib/sites/host";
 import { supabaseCredentials } from "@/lib/supabase/public-env";
 
 export async function updateSession(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  const hostHeader = request.headers.get("host") ?? request.nextUrl.host;
+
+  if (shouldRewriteToPublicSite(path, hostHeader)) {
+    const rewriteUrl = request.nextUrl.clone();
+    const siteHost = normalizeHost(hostHeader);
+    const suffix = path === "/" ? "" : path;
+    rewriteUrl.pathname = `/_public/${siteHost}${suffix}`;
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
   const { url, publishableKey } = supabaseCredentials();
 
@@ -31,17 +43,61 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const path = request.nextUrl.pathname;
-
-  if (path.startsWith("/admin") && !user) {
+  if ((path.startsWith("/admin") || path.startsWith("/app")) && !user) {
     return redirectKeepingSession(request, "/login", supabaseResponse);
   }
 
   if (path === "/login" && user) {
-    return redirectKeepingSession(request, "/admin", supabaseResponse);
+    const destination = await resolveProxyHome(supabase, user.id);
+    return redirectKeepingSession(request, destination, supabaseResponse);
   }
 
   return supabaseResponse;
+}
+
+async function resolveProxyHome(
+  supabase: ReturnType<typeof createServerClient>,
+  userId: string,
+) {
+  const { data: admin } = await supabase
+    .from("admin_users")
+    .select("id")
+    .eq("id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (admin) {
+    return "/admin";
+  }
+
+  const { data: professional } = await supabase
+    .from("professional_users")
+    .select("auth_user_id")
+    .eq("auth_user_id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (professional) {
+    return "/app";
+  }
+
+  return "/login";
+}
+
+function shouldRewriteToPublicSite(path: string, hostHeader: string): boolean {
+  if (
+    path.startsWith("/_public") ||
+    path.startsWith("/admin") ||
+    path.startsWith("/app") ||
+    path.startsWith("/login") ||
+    path.startsWith("/preview") ||
+    path.startsWith("/_next") ||
+    path.startsWith("/api")
+  ) {
+    return false;
+  }
+
+  return isPublicSiteHost(hostHeader);
 }
 
 function redirectKeepingSession(
