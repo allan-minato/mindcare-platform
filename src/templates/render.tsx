@@ -9,6 +9,8 @@ import { PREVIEW_BANNER_CLASS } from "@/templates/shared";
 type TemplateRendererProps = {
   document: SiteDocument;
   mode?: "preview" | "public";
+  /** Prefixo de rotas internas (ex.: `/preview/{siteId}`). */
+  basePath?: string;
   banner?: ReactNode;
 };
 
@@ -19,6 +21,7 @@ function PreviewBanner() {
 export function TemplateRenderer({
   document,
   mode = "public",
+  basePath = "",
   banner,
 }: TemplateRendererProps) {
   const previewBanner =
@@ -27,12 +30,28 @@ export function TemplateRenderer({
   switch (document.site.template.key) {
     case "minimalista":
       return (
-        <MinimalistaTemplate document={document} banner={previewBanner} />
+        <MinimalistaTemplate
+          document={document}
+          banner={previewBanner}
+          basePath={basePath}
+        />
       );
     case "premium":
-      return <PremiumTemplate document={document} banner={previewBanner} />;
+      return (
+        <PremiumTemplate
+          document={document}
+          banner={previewBanner}
+          basePath={basePath}
+        />
+      );
     case "acolhedor":
     default:
-      return <AcolhedorTemplate document={document} banner={previewBanner} />;
+      return (
+        <AcolhedorTemplate
+          document={document}
+          banner={previewBanner}
+          basePath={basePath}
+        />
+      );
   }
 }

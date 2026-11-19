@@ -8,16 +8,18 @@ import { homeSections, ScrollReveal } from "@/templates/shared";
 type AcolhedorTemplateProps = {
   document: SiteDocument;
   banner?: ReactNode;
+  basePath?: string;
 };
 
 export function AcolhedorTemplate({
   document,
   banner,
+  basePath = "",
 }: AcolhedorTemplateProps) {
   const sections = homeSections(document);
 
   return (
-    <AcolhedorShell document={document} banner={banner}>
+    <AcolhedorShell document={document} banner={banner} basePath={basePath}>
       {sections.map((section, index) => {
         const node = renderAcolhedorSection(section, document);
         const isHero = section.module === "hero";

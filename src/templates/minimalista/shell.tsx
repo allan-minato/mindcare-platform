@@ -5,6 +5,7 @@ import {
   previewBannerCss,
   professionalDisplayName,
   scrollRevealCss,
+  siteHref,
   siteNavItems,
   whatsappHref,
   type TemplateShellProps,
@@ -25,12 +26,13 @@ const body = Instrument_Sans({
 export function MinimalistaShell({
   document,
   banner,
+  basePath = "",
   children,
 }: TemplateShellProps) {
   const name = professionalDisplayName(document.professional);
   const whatsapp = whatsappHref(document.professional.whatsapp);
   const council = formatCouncil(document.professional);
-  const navItems = siteNavItems(document);
+  const navItems = siteNavItems(document, basePath);
 
   return (
     <div
@@ -41,7 +43,7 @@ export function MinimalistaShell({
       {banner}
       <header className="minimalista-header">
         <div className="minimalista-wrap minimalista-header-inner">
-          <a href="#inicio" className="minimalista-brand">
+          <a href={siteHref("/", basePath)} className="minimalista-brand">
             {name}
           </a>
           {navItems.length > 0 ? (

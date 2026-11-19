@@ -97,6 +97,12 @@ export function buildCreatePreviewDocument(input: {
       seo: {},
     },
     professional,
+    blog: {
+      enabled: false,
+      title: "Blog",
+      intro: "",
+      posts: [],
+    },
     pages: [
       {
         path: "/",

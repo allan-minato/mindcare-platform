@@ -5,6 +5,7 @@ import {
   previewBannerCss,
   professionalDisplayName,
   scrollRevealCss,
+  siteHref,
   siteNavItems,
   whatsappHref,
   type TemplateShellProps,
@@ -25,12 +26,13 @@ const body = Source_Sans_3({
 export function PremiumShell({
   document,
   banner,
+  basePath = "",
   children,
 }: TemplateShellProps) {
   const name = professionalDisplayName(document.professional);
   const whatsapp = whatsappHref(document.professional.whatsapp);
   const council = formatCouncil(document.professional);
-  const navItems = siteNavItems(document);
+  const navItems = siteNavItems(document, basePath);
 
   return (
     <div
@@ -41,7 +43,7 @@ export function PremiumShell({
       {banner}
       <header className="premium-header">
         <div className="premium-wrap premium-header-inner">
-          <a href="#inicio" className="premium-brand">
+          <a href={siteHref("/", basePath)} className="premium-brand">
             {name}
           </a>
           {navItems.length > 0 ? (

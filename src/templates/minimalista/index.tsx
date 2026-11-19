@@ -8,16 +8,18 @@ import { homeSections, ScrollReveal } from "@/templates/shared";
 type MinimalistaTemplateProps = {
   document: SiteDocument;
   banner?: ReactNode;
+  basePath?: string;
 };
 
 export function MinimalistaTemplate({
   document,
   banner,
+  basePath = "",
 }: MinimalistaTemplateProps) {
   const sections = homeSections(document);
 
   return (
-    <MinimalistaShell document={document} banner={banner}>
+    <MinimalistaShell document={document} banner={banner} basePath={basePath}>
       {sections.map((section, index) => {
         const node = renderMinimalistaSection(section, document);
         const isHero = section.module === "hero";

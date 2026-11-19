@@ -37,6 +37,23 @@ export const siteDocumentProfessionalSchema = z.object({
   attendance_modes: z.array(z.string()).nullable().optional(),
 });
 
+export const siteDocumentBlogPostSchema = z.object({
+  slug: z.string(),
+  title: z.string(),
+  excerpt: z.string().default(""),
+  body_markdown: z.string().default(""),
+  cover_image_url: z.string().nullable().optional(),
+  published_at: z.string().nullable().optional(),
+  seo: jsonObject,
+});
+
+export const siteDocumentBlogSchema = z.object({
+  enabled: z.boolean().default(false),
+  title: z.string().default("Blog"),
+  intro: z.string().default(""),
+  posts: z.array(siteDocumentBlogPostSchema).default([]),
+});
+
 export const siteDocumentSchema = z.object({
   schema_version: z.literal(1),
   site: z.object({
@@ -50,6 +67,12 @@ export const siteDocumentSchema = z.object({
   }),
   professional: siteDocumentProfessionalSchema,
   pages: z.array(siteDocumentPageSchema).default([]),
+  blog: siteDocumentBlogSchema.default({
+    enabled: false,
+    title: "Blog",
+    intro: "",
+    posts: [],
+  }),
 });
 
 export type SiteDocument = z.infer<typeof siteDocumentSchema>;
@@ -57,6 +80,8 @@ export type SiteDocumentSection = z.infer<typeof siteDocumentSectionSchema>;
 export type SiteDocumentProfessional = z.infer<
   typeof siteDocumentProfessionalSchema
 >;
+export type SiteDocumentBlog = z.infer<typeof siteDocumentBlogSchema>;
+export type SiteDocumentBlogPost = z.infer<typeof siteDocumentBlogPostSchema>;
 
 export function parseSiteDocument(value: unknown): SiteDocument | null {
   const parsed = siteDocumentSchema.safeParse(value);
@@ -86,4 +111,15 @@ export function whatsappHref(whatsapp: string | null | undefined): string | null
     return null;
   }
   return `https://wa.me/${digits}`;
+}
+
+export function documentBlog(document: SiteDocument): SiteDocumentBlog {
+  return document.blog;
+}
+
+export function findBlogPost(
+  document: SiteDocument,
+  slug: string,
+): SiteDocumentBlogPost | null {
+  return document.blog.posts.find((post) => post.slug === slug) ?? null;
 }

@@ -54,14 +54,22 @@ export default async function PortalSitePage({ params }: PageProps) {
               : "Rascunho"}
           </p>
         </div>
-        <Link
-          href={previewHref}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
-        >
-          Ver prévia
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/app/sites/${site.id}/blog`}
+            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
+          >
+            Blog
+          </Link>
+          <Link
+            href={previewHref}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
+          >
+            Ver prévia
+          </Link>
+        </div>
       </div>
     </div>
   );

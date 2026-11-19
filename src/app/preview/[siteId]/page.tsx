@@ -30,5 +30,11 @@ export default async function PreviewSitePage({ params }: PageProps) {
     notFound();
   }
 
-  return <TemplateRenderer document={document} mode="preview" />;
+  return (
+    <TemplateRenderer
+      document={document}
+      mode="preview"
+      basePath={`/preview/${siteId}`}
+    />
+  );
 }

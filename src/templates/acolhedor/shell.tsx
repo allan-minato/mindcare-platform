@@ -5,6 +5,7 @@ import {
   previewBannerCss,
   professionalDisplayName,
   scrollRevealCss,
+  siteHref,
   siteNavItems,
   whatsappHref,
   type TemplateShellProps,
@@ -27,6 +28,7 @@ const body = Outfit({
 export function AcolhedorShell({
   document,
   banner,
+  basePath = "",
   children,
 }: TemplateShellProps) {
   const name = professionalDisplayName(document.professional);
@@ -36,7 +38,7 @@ export function AcolhedorShell({
   const brandRole = [specialty || "Psicólogo", council]
     .filter(Boolean)
     .join(" · ");
-  const navItems = siteNavItems(document);
+  const navItems = siteNavItems(document, basePath);
 
   return (
     <div
@@ -47,7 +49,7 @@ export function AcolhedorShell({
       {banner}
       <header className="acolhedor-header">
         <div className="acolhedor-wrap acolhedor-header-inner">
-          <a href="#inicio" className="acolhedor-brand">
+          <a href={siteHref("/", basePath)} className="acolhedor-brand">
             <span className="acolhedor-brand-name">{name}</span>
             <span className="acolhedor-brand-role">{brandRole}</span>
           </a>

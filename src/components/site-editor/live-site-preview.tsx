@@ -109,6 +109,59 @@ export function LiveSitePreview({
     scrollBox.scrollTo({ top, behavior: "smooth" });
   }, [focusSectionKey, deferredDocument, device, zoom]);
 
+  // Links absolutos do site (/blog, /) saem do editor — redireciona para a prévia cheia.
+  useEffect(() => {
+    const root = contentRef.current;
+    if (!root || !fullPreviewHref) {
+      return;
+    }
+
+    const onClick = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      const anchor = (event.target as Element | null)?.closest?.("a");
+      if (!anchor || !(anchor instanceof HTMLAnchorElement)) {
+        return;
+      }
+      if (anchor.target === "_blank" || anchor.hasAttribute("download")) {
+        return;
+      }
+
+      const href = anchor.getAttribute("href");
+      if (!href || href.startsWith("#")) {
+        return;
+      }
+      if (
+        href.startsWith("http") ||
+        href.startsWith("mailto:") ||
+        href.startsWith("tel:") ||
+        href.startsWith("javascript:")
+      ) {
+        return;
+      }
+
+      const previewUrl = resolvePreviewHref(href, fullPreviewHref);
+      if (!previewUrl) {
+        return;
+      }
+
+      event.preventDefault();
+      window.open(previewUrl, "_blank", "noopener,noreferrer");
+    };
+
+    root.addEventListener("click", onClick);
+    return () => root.removeEventListener("click", onClick);
+  }, [fullPreviewHref, deferredDocument, device]);
+
   const scale = fitScale * zoom;
   const zoomPercent = Math.round(zoom * 100);
   const desktopSiteVh = Math.round(desktopFrameH / scale);
@@ -222,7 +275,10 @@ export function LiveSitePreview({
                       }
                     >
                       <div ref={contentRef}>
-                        <TemplateRenderer document={deferredDocument} />
+                        <TemplateRenderer
+                          document={deferredDocument}
+                          basePath={fullPreviewHref}
+                        />
                       </div>
                     </div>
                     <PhoneStatusBar />
@@ -250,6 +306,7 @@ export function LiveSitePreview({
             <div ref={contentRef} style={{ width: DESKTOP_WIDTH }}>
               <TemplateRenderer
                 document={deferredDocument}
+                basePath={fullPreviewHref}
                 banner={
                   <div className="bg-zinc-900 px-3 py-2 text-center text-xs tracking-wide text-zinc-100">
                     Prévia ao vivo · desktop 1280px
@@ -303,6 +360,24 @@ function PhoneHomeIndicator() {
 
 function roundZoom(value: number) {
   return Math.round(value * 100) / 100;
+}
+
+/** Mapeia caminhos do site público para a prévia `/preview/{id}/…`. */
+function resolvePreviewHref(href: string, previewBase: string): string | null {
+  const base = previewBase.replace(/\/$/, "");
+  if (href === "/" || href === base) {
+    return base;
+  }
+  if (href.startsWith("/#")) {
+    return `${base}${href.slice(1)}`;
+  }
+  if (href.startsWith("/blog")) {
+    return `${base}${href}`;
+  }
+  if (href.startsWith(`${base}/`) || href === base) {
+    return href;
+  }
+  return null;
 }
 
 function DeviceButton({

@@ -8,13 +8,18 @@ import { homeSections, ScrollReveal } from "@/templates/shared";
 type PremiumTemplateProps = {
   document: SiteDocument;
   banner?: ReactNode;
+  basePath?: string;
 };
 
-export function PremiumTemplate({ document, banner }: PremiumTemplateProps) {
+export function PremiumTemplate({
+  document,
+  banner,
+  basePath = "",
+}: PremiumTemplateProps) {
   const sections = homeSections(document);
 
   return (
-    <PremiumShell document={document} banner={banner}>
+    <PremiumShell document={document} banner={banner} basePath={basePath}>
       {sections.map((section, index) => {
         const node = renderPremiumSection(section, document);
         const isHero = section.module === "hero";

@@ -12,8 +12,34 @@ import type { ModuleKey } from "@/modules/registry";
 export type TemplateShellProps = {
   document: SiteDocument;
   banner?: ReactNode;
+  /** Prefixo de rotas internas (ex.: `/preview/{siteId}`). */
+  basePath?: string;
   children: ReactNode;
 };
+
+/**
+ * Resolve caminhos internos do site. Com `basePath` (prévia), `/blog` vira
+ * `/preview/{id}/blog` sem quebrar âncoras `#seção`.
+ */
+export function siteHref(path: string, basePath = ""): string {
+  const base = basePath.replace(/\/$/, "");
+  if (!base) {
+    return path;
+  }
+  if (path.startsWith("#")) {
+    return path;
+  }
+  if (path === "/") {
+    return base;
+  }
+  if (path.startsWith("/#")) {
+    return `${base}${path.slice(1)}`;
+  }
+  if (path.startsWith("/")) {
+    return `${base}${path}`;
+  }
+  return path;
+}
 
 export type TemplateSectionProps = {
   section: SiteDocumentSection;
@@ -89,10 +115,13 @@ export function sectionHasNavContent(section: SiteDocumentSection): boolean {
 }
 
 /** Links da nav principal (preenchidas + ordem curada). */
-export function siteNavItems(document: SiteDocument): SiteNavItem[] {
+export function siteNavItems(
+  document: SiteDocument,
+  basePath = "",
+): SiteNavItem[] {
   const sections = homeSections(document);
 
-  return PRIMARY_NAV.flatMap(({ module, label }) => {
+  const items = PRIMARY_NAV.flatMap(({ module, label }) => {
     const section = sections.find(
       (item) => item.module === module && sectionHasNavContent(item),
     );
@@ -101,6 +130,21 @@ export function siteNavItems(document: SiteDocument): SiteNavItem[] {
     }
     return [{ href: `#${section.key}`, label }];
   });
+
+  if (document.blog.enabled && document.blog.posts.length > 0) {
+    const blogItem: SiteNavItem = {
+      href: siteHref("/blog", basePath),
+      label: "Blog",
+    };
+    const contactIndex = items.findIndex((item) => item.label === "Contato");
+    if (contactIndex >= 0) {
+      items.splice(contactIndex, 0, blogItem);
+    } else {
+      items.push(blogItem);
+    }
+  }
+
+  return items;
 }
 
 export function formatCouncil(

@@ -15,6 +15,7 @@ erDiagram
   sites ||--o{ site_domains : "domínios"
   sites ||--o{ site_pages : "páginas"
   site_pages ||--o{ site_sections : "seções"
+  sites ||--o{ site_posts : "blog"
   sites ||--o{ site_publications : "histórico"
   sites |o--o| site_publications : "live_publication_id"
 ```
@@ -29,6 +30,7 @@ erDiagram
 | `site_domains` | Domínios personalizados, com domínio principal e status de verificação e configuração |
 | `site_pages` | Páginas do site. A inicial tem `path = '/'` |
 | `site_sections` | Módulos de cada página: `module_key`, `section_key`, ordem, `content`, `settings` e visibilidade |
+| `site_posts` | Artigos do blog do site (`draft` / `published`). Só `published` entram no snapshot |
 | `site_publications` | Histórico imutável dos snapshots publicados |
 
 ## Relacionamentos e exclusões
@@ -38,12 +40,12 @@ erDiagram
 | `admin_users.id` → `auth.users.id` | Cascade |
 | `sites.professional_id` → `professionals.id` | Restrict |
 | `sites.template_key` → `site_templates.key` | Restrict |
-| `site_domains`, `site_pages`, `site_publications` → `sites` | Cascade |
+| `site_domains`, `site_pages`, `site_posts`, `site_publications` → `sites` | Cascade |
 | `site_sections.page_id` → `site_pages.id` | Cascade |
 | `site_publications.published_by` → `admin_users.id` | Set null |
 | `sites (id, live_publication_id)` → `site_publications (site_id, id)` | Chave composta: o site só aponta para uma publicação dele mesmo |
 
-Unicidade: `sites.slug`, `site_domains.domain` (global), um domínio principal por site, `(site_id, path)` em páginas, `(page_id, section_key)` em seções e `(site_id, version)` em publicações.
+Unicidade: `sites.slug`, `site_domains.domain` (global), um domínio principal por site, `(site_id, path)` em páginas, `(page_id, section_key)` em seções, `(site_id, slug)` em posts e `(site_id, version)` em publicações.
 
 ## Soft delete
 
@@ -53,7 +55,7 @@ Unicidade: `sites.slug`, `site_domains.domain` (global), um domínio principal p
 
 ## Publicação
 
-O painel edita apenas o rascunho: `sites`, `site_pages`, `site_sections` e os dados do profissional. O site público lê apenas um snapshot.
+O painel edita apenas o rascunho: `sites`, `site_pages`, `site_sections`, `site_posts` e os dados do profissional. O site público lê apenas um snapshot. Config da listagem do blog fica em `sites.seo.blog` (`title`, `intro`).
 
 | Função | Quem chama | Efeito |
 | --- | --- | --- |
@@ -76,11 +78,17 @@ Estrutura do documento (`schema_version: 1`):
   "professional": { "professional_name": "...", "council": "crp", "registration_number": "...", "whatsapp": "..." },
   "pages": [
     { "path": "/", "title": "Início", "seo": {}, "sections": [{ "key": "inicio", "module": "hero", "content": {}, "settings": {} }] }
-  ]
+  ],
+  "blog": {
+    "enabled": true,
+    "title": "Reflexões sobre saúde mental",
+    "intro": "...",
+    "posts": [{ "slug": "...", "title": "...", "excerpt": "...", "body_markdown": "...", "cover_image_url": null, "published_at": "...", "seo": {} }]
+  }
 }
 ```
 
-O snapshot não inclui notas internas, status, ids nem seções e páginas ocultas. Dados do profissional entram como estavam no momento da publicação; uma alteração de telefone só aparece no site depois de republicar.
+O snapshot não inclui notas internas, status, ids, seções/páginas ocultas nem posts em `draft`. Dados do profissional entram como estavam no momento da publicação; uma alteração de telefone só aparece no site depois de republicar.
 
 As funções de leitura pública devolvem `{ version, published_at, primary_domain, document }`, ou `null` quando não há site no ar.
 
