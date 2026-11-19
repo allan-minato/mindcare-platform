@@ -22,6 +22,7 @@ import {
   type SiteDocument,
   type SiteDocumentSection,
 } from "@/lib/sites/document";
+import { homeSections, sectionHasNavContent } from "@/templates/shared";
 
 type SectionProps = {
   section: SiteDocumentSection;
@@ -72,6 +73,9 @@ function HeroSection({ section, document }: SectionProps) {
     content.support.trim() ||
     "Acompanhamento psicológico com escuta atenta e presença.";
   const imageUrl = content.image_url || document.professional.photo_url;
+  const servicesSection = homeSections(document).find(
+    (item) => item.module === "services" && sectionHasNavContent(item),
+  );
 
   return (
     <section id={section.key} className="acolhedor-hero">
@@ -91,12 +95,14 @@ function HeroSection({ section, document }: SectionProps) {
                 Entrar em contato
               </a>
             ) : null}
-            <a
-              href="#servicos"
-              className={`acolhedor-btn${whatsapp ? " acolhedor-btn-ghost" : ""}`}
-            >
-              Conhecer serviços
-            </a>
+            {servicesSection ? (
+              <a
+                href={`#${servicesSection.key}`}
+                className={`acolhedor-btn${whatsapp ? " acolhedor-btn-ghost" : ""}`}
+              >
+                Conhecer serviços
+              </a>
+            ) : null}
           </div>
           {content.badges.length > 0 ? (
             <div className="acolhedor-hero-badges">

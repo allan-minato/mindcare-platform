@@ -28,25 +28,27 @@ export default async function NewSitePage({ searchParams }: PageProps) {
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
-      <div className="grid gap-2">
-        <Link
-          href="/admin/sites"
-          className="text-sm text-zinc-500 underline-offset-4 hover:underline"
-        >
-          Voltar
-        </Link>
-        <h1 className="text-3xl font-semibold tracking-tight">Novo site</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
-          Escolha o profissional e o template. A página inicial e as seções
-          padrão são geradas na criação.
-        </p>
-      </div>
+    <main className="flex min-h-0 w-full flex-1 flex-col">
       <SiteForm
         action={createSite}
         professionals={professionals}
         templates={templates}
         initialProfessionalId={params.professionalId}
+        header={
+          <div className="grid gap-2">
+            <Link
+              href="/admin/sites"
+              className="text-sm text-zinc-500 underline-offset-4 hover:underline"
+            >
+              Voltar
+            </Link>
+            <h1 className="text-3xl font-semibold tracking-tight">Novo site</h1>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              Escolha o profissional e o template. A prévia mostra o visual
+              antes de criar; as seções padrão vêm na sequência.
+            </p>
+          </div>
+        }
       />
     </main>
   );

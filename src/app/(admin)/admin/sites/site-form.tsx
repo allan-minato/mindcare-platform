@@ -1,14 +1,19 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useMemo, useState, type ReactNode } from "react";
 
 import { type SiteActionState } from "@/app/(admin)/admin/sites/actions";
+import { CreateSiteWorkspace } from "@/components/site-editor/create-site-workspace";
 import {
   suggestSiteName,
   suggestSlug,
   type EligibleProfessional,
   type SiteTemplateOption,
 } from "@/lib/sites/schema";
+import {
+  isTemplateKey,
+  type TemplateKey,
+} from "@/lib/templates/registry";
 
 type SiteFormProps = {
   action: (
@@ -18,6 +23,7 @@ type SiteFormProps = {
   professionals: EligibleProfessional[];
   templates: SiteTemplateOption[];
   initialProfessionalId?: string;
+  header?: ReactNode;
 };
 
 const initialState: SiteActionState = {};
@@ -27,6 +33,7 @@ export function SiteForm({
   professionals,
   templates,
   initialProfessionalId,
+  header,
 }: SiteFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const defaultProfessionalId =
@@ -40,6 +47,9 @@ export function SiteForm({
   );
 
   const [professionalId, setProfessionalId] = useState(defaultProfessionalId);
+  const [templateKey, setTemplateKey] = useState<TemplateKey>(
+    templates[0]?.key ?? "acolhedor",
+  );
   const [name, setName] = useState(
     initialProfessional ? suggestSiteName(initialProfessional) : "",
   );
@@ -72,140 +82,155 @@ export function SiteForm({
   }
 
   return (
-    <form action={formAction} className="grid gap-6">
-      {state.error ? (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
-          {state.error}
-        </p>
-      ) : null}
-
-      <div className="grid gap-1.5">
-        <label htmlFor="professional_id" className="text-sm font-medium">
-          Profissional
-        </label>
-        <select
-          id="professional_id"
-          name="professional_id"
-          required
-          value={professionalId}
-          onChange={(event) => {
-            const nextId = event.target.value;
-            setProfessionalId(nextId);
-            const next = professionals.find((item) => item.id === nextId);
-            if (!next) {
-              return;
-            }
-            const suggestedName = suggestSiteName(next);
-            setName(suggestedName);
-            if (!slugTouched) {
-              setSlug(suggestSlug(suggestedName));
-            }
-          }}
-          className={inputClass}
-        >
-          {professionals.map((professional) => (
-            <option key={professional.id} value={professional.id}>
-              {professional.professional_name?.trim() || professional.full_name}
-              {professional.professional_name
-                ? ` (${professional.full_name})`
-                : ""}
-            </option>
-          ))}
-        </select>
-        {state.fieldErrors?.professional_id?.[0] ? (
-          <p className="text-sm text-red-700 dark:text-red-400">
-            {state.fieldErrors.professional_id[0]}
+    <CreateSiteWorkspace
+      professionals={professionals}
+      templates={templates}
+      professionalId={professionalId}
+      templateKey={templateKey}
+      slug={slug}
+      header={header}
+    >
+      <form action={formAction} className="grid gap-6">
+        {state.error ? (
+          <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+            {state.error}
           </p>
         ) : null}
-      </div>
 
-      <div className="grid gap-1.5">
-        <label htmlFor="template_key" className="text-sm font-medium">
-          Template
-        </label>
-        <select
-          id="template_key"
-          name="template_key"
-          required
-          defaultValue={templates[0]?.key}
-          className={inputClass}
-        >
-          {templates.map((template) => (
-            <option key={template.key} value={template.key}>
-              {template.name}
-            </option>
-          ))}
-        </select>
-        {selectedProfessional ? (
+        <div className="grid gap-1.5">
+          <label htmlFor="professional_id" className="text-sm font-medium">
+            Profissional
+          </label>
+          <select
+            id="professional_id"
+            name="professional_id"
+            required
+            value={professionalId}
+            onChange={(event) => {
+              const nextId = event.target.value;
+              setProfessionalId(nextId);
+              const next = professionals.find((item) => item.id === nextId);
+              if (!next) {
+                return;
+              }
+              const suggestedName = suggestSiteName(next);
+              setName(suggestedName);
+              if (!slugTouched) {
+                setSlug(suggestSlug(suggestedName));
+              }
+            }}
+            className={inputClass}
+          >
+            {professionals.map((professional) => (
+              <option key={professional.id} value={professional.id}>
+                {professional.professional_name?.trim() || professional.full_name}
+                {professional.professional_name
+                  ? ` (${professional.full_name})`
+                  : ""}
+              </option>
+            ))}
+          </select>
+          {state.fieldErrors?.professional_id?.[0] ? (
+            <p className="text-sm text-red-700 dark:text-red-400">
+              {state.fieldErrors.professional_id[0]}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="grid gap-1.5">
+          <label htmlFor="template_key" className="text-sm font-medium">
+            Template
+          </label>
+          <select
+            id="template_key"
+            name="template_key"
+            required
+            value={templateKey}
+            onChange={(event) => {
+              const next = event.target.value;
+              if (isTemplateKey(next)) {
+                setTemplateKey(next);
+              }
+            }}
+            className={inputClass}
+          >
+            {templates.map((template) => (
+              <option key={template.key} value={template.key}>
+                {template.name}
+              </option>
+            ))}
+          </select>
+          {selectedProfessional ? (
+            <p className="text-sm text-zinc-500">
+              A prévia à direita muda com o template e o profissional.
+            </p>
+          ) : null}
+          {state.fieldErrors?.template_key?.[0] ? (
+            <p className="text-sm text-red-700 dark:text-red-400">
+              {state.fieldErrors.template_key[0]}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="grid gap-1.5">
+          <label htmlFor="name" className="text-sm font-medium">
+            Nome do site
+          </label>
+          <input
+            id="name"
+            name="name"
+            required
+            value={name}
+            onChange={(event) => {
+              const nextName = event.target.value;
+              setName(nextName);
+              if (!slugTouched) {
+                setSlug(suggestSlug(nextName));
+              }
+            }}
+            className={inputClass}
+          />
+          {state.fieldErrors?.name?.[0] ? (
+            <p className="text-sm text-red-700 dark:text-red-400">
+              {state.fieldErrors.name[0]}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="grid gap-1.5">
+          <label htmlFor="slug" className="text-sm font-medium">
+            Slug
+          </label>
+          <input
+            id="slug"
+            name="slug"
+            required
+            value={slug}
+            onChange={(event) => {
+              setSlugTouched(true);
+              setSlug(event.target.value.toLowerCase());
+            }}
+            className={inputClass}
+          />
           <p className="text-sm text-zinc-500">
-            As três chaves geram as mesmas 12 seções padrão nesta etapa.
+            Letras minúsculas, números e hífens. Usado no host interno depois.
           </p>
-        ) : null}
-        {state.fieldErrors?.template_key?.[0] ? (
-          <p className="text-sm text-red-700 dark:text-red-400">
-            {state.fieldErrors.template_key[0]}
-          </p>
-        ) : null}
-      </div>
+          {state.fieldErrors?.slug?.[0] ? (
+            <p className="text-sm text-red-700 dark:text-red-400">
+              {state.fieldErrors.slug[0]}
+            </p>
+          ) : null}
+        </div>
 
-      <div className="grid gap-1.5">
-        <label htmlFor="name" className="text-sm font-medium">
-          Nome do site
-        </label>
-        <input
-          id="name"
-          name="name"
-          required
-          value={name}
-          onChange={(event) => {
-            const nextName = event.target.value;
-            setName(nextName);
-            if (!slugTouched) {
-              setSlug(suggestSlug(nextName));
-            }
-          }}
-          className={inputClass}
-        />
-        {state.fieldErrors?.name?.[0] ? (
-          <p className="text-sm text-red-700 dark:text-red-400">
-            {state.fieldErrors.name[0]}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="grid gap-1.5">
-        <label htmlFor="slug" className="text-sm font-medium">
-          Slug
-        </label>
-        <input
-          id="slug"
-          name="slug"
-          required
-          value={slug}
-          onChange={(event) => {
-            setSlugTouched(true);
-            setSlug(event.target.value.toLowerCase());
-          }}
-          className={inputClass}
-        />
-        <p className="text-sm text-zinc-500">
-          Letras minúsculas, números e hífens. Usado no host interno depois.
-        </p>
-        {state.fieldErrors?.slug?.[0] ? (
-          <p className="text-sm text-red-700 dark:text-red-400">
-            {state.fieldErrors.slug[0]}
-          </p>
-        ) : null}
-      </div>
-
-      <button
-        type="submit"
-        disabled={pending}
-        className="justify-self-start rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
-      >
-        {pending ? "Criando…" : "Criar site"}
-      </button>
-    </form>
+        <button
+          type="submit"
+          disabled={pending}
+          className="justify-self-start rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+        >
+          {pending ? "Criando…" : "Criar site"}
+        </button>
+      </form>
+    </CreateSiteWorkspace>
   );
 }
 

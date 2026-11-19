@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { SiteSectionsEditor } from "@/app/(admin)/admin/sites/site-sections-editor";
 import { requireProfessionalProfile } from "@/lib/auth/professional";
+import { getPreviewDocument } from "@/lib/sites/preview";
 import { getSite } from "@/lib/sites/queries";
 import { templateLabel } from "@/lib/templates/registry";
 
@@ -20,61 +21,79 @@ type PageProps = {
 export default async function PortalSitePage({ params }: PageProps) {
   const profile = await requireProfessionalProfile();
   const { id } = await params;
-  const site = await getSite(id);
+  const [site, baseDocument] = await Promise.all([
+    getSite(id),
+    getPreviewDocument(id),
+  ]);
 
-  if (!site || site.professional_id !== profile.professionalId) {
+  if (!site || site.professional_id !== profile.professionalId || !baseDocument) {
     notFound();
   }
 
   const sections = site.home_page?.sections ?? [];
+  const previewHref = `/preview/${site.id}`;
 
-  return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
-      <div className="grid gap-2">
-        <Link
-          href="/app"
-          className="text-sm text-zinc-500 underline-offset-4 hover:underline"
-        >
-          Voltar
-        </Link>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="grid gap-2">
-            <h1 className="text-3xl font-semibold tracking-tight">{site.name}</h1>
-            <p className="text-sm text-zinc-500">
-              {site.slug}
-              {" · "}
-              {templateLabel(site.template_key)}
-              {" · "}
-              {site.live_publication_id
-                ? `No ar · v${site.published_version ?? "—"}`
-                : "Rascunho"}
-            </p>
-          </div>
-          <Link
-            href={`/preview/${site.id}`}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
-          >
-            Ver prévia
-          </Link>
-        </div>
-      </div>
-
-      <section className="grid gap-3">
-        <div className="grid gap-1">
-          <h2 className="text-lg font-medium">Seções</h2>
+  const header = (
+    <div className="grid gap-2">
+      <Link
+        href="/app"
+        className="text-sm text-zinc-500 underline-offset-4 hover:underline"
+      >
+        Voltar
+      </Link>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="grid gap-2">
+          <h1 className="text-3xl font-semibold tracking-tight">{site.name}</h1>
           <p className="text-sm text-zinc-500">
-            Edite textos, ordem e visibilidade. Para colocar no ar, a equipe
-            MindCare publica o site.
+            {site.slug}
+            {" · "}
+            {templateLabel(site.template_key)}
+            {" · "}
+            {site.live_publication_id
+              ? `No ar · v${site.published_version ?? "—"}`
+              : "Rascunho"}
           </p>
         </div>
-        {site.home_page ? (
-          <SiteSectionsEditor siteId={site.id} sections={sections} />
-        ) : (
-          <p className="text-sm text-zinc-500">Nenhuma seção para editar.</p>
-        )}
-      </section>
+        <Link
+          href={previewHref}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
+        >
+          Ver prévia
+        </Link>
+      </div>
+    </div>
+  );
+
+  const aside = (
+    <section className="grid gap-1">
+      <p className="text-sm text-zinc-500">
+        Edite textos, ordem e visibilidade com prévia ao vivo. Para colocar no
+        ar, a equipe MindCare publica o site.
+      </p>
+    </section>
+  );
+
+  if (!site.home_page) {
+    return (
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
+        {header}
+        <p className="text-sm text-zinc-500">Nenhuma seção para editar.</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="flex min-h-0 w-full flex-1 flex-col">
+      <SiteSectionsEditor
+        siteId={site.id}
+        sections={sections}
+        baseDocument={baseDocument}
+        fullPreviewHref={previewHref}
+        header={header}
+        aside={aside}
+      />
     </main>
   );
 }

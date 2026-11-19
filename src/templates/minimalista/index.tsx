@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { SiteDocument } from "@/lib/sites/document";
 import { renderMinimalistaSection } from "@/templates/minimalista/sections";
 import { MinimalistaShell } from "@/templates/minimalista/shell";
-import { homeSections } from "@/templates/shared";
+import { homeSections, ScrollReveal } from "@/templates/shared";
 
 type MinimalistaTemplateProps = {
   document: SiteDocument;
@@ -18,9 +18,19 @@ export function MinimalistaTemplate({
 
   return (
     <MinimalistaShell document={document} banner={banner}>
-      {sections.map((section) =>
-        renderMinimalistaSection(section, document),
-      )}
+      {sections.map((section, index) => {
+        const node = renderMinimalistaSection(section, document);
+        const isHero = section.module === "hero";
+        return (
+          <ScrollReveal
+            key={section.key}
+            immediate={isHero}
+            delayMs={isHero ? 0 : Math.min(index * 40, 160)}
+          >
+            {node}
+          </ScrollReveal>
+        );
+      })}
     </MinimalistaShell>
   );
 }

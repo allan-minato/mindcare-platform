@@ -4,9 +4,12 @@ import {
   formatCouncil,
   previewBannerCss,
   professionalDisplayName,
+  scrollRevealCss,
+  siteNavItems,
   whatsappHref,
   type TemplateShellProps,
 } from "@/templates/shared";
+import { SmoothAnchors } from "@/templates/smooth-anchors";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
@@ -27,23 +30,29 @@ export function PremiumShell({
   const name = professionalDisplayName(document.professional);
   const whatsapp = whatsappHref(document.professional.whatsapp);
   const council = formatCouncil(document.professional);
+  const navItems = siteNavItems(document);
 
   return (
     <div
       className={`${display.variable} ${body.variable} premium-root min-h-full`}
     >
-      <style>{`${previewBannerCss}${premiumCss}`}</style>
+      <style>{`${previewBannerCss}${scrollRevealCss}${premiumCss}`}</style>
+      <SmoothAnchors />
       {banner}
       <header className="premium-header">
         <div className="premium-wrap premium-header-inner">
           <a href="#inicio" className="premium-brand">
             {name}
           </a>
-          <nav className="premium-nav" aria-label="Seções">
-            <a href="#sobre">Sobre</a>
-            <a href="#servicos">Serviços</a>
-            <a href="#contato">Contato</a>
-          </nav>
+          {navItems.length > 0 ? (
+            <nav className="premium-nav" aria-label="Seções">
+              {navItems.map((item) => (
+                <a key={item.href} href={item.href}>
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          ) : null}
           {whatsapp ? (
             <a
               href={whatsapp}
@@ -79,6 +88,8 @@ export function PremiumShell({
 
 const premiumCss = `
 .premium-root {
+  container-type: inline-size;
+  container-name: site;
   --pr-bg: #0f1419;
   --pr-surface: #171e26;
   --pr-ink: #f2ebe3;
@@ -97,6 +108,7 @@ const premiumCss = `
   position: sticky;
   top: 0;
   z-index: 20;
+  padding-top: var(--site-safe-top, env(safe-area-inset-top, 0px));
   backdrop-filter: blur(12px);
   background: color-mix(in srgb, var(--pr-bg) 88%, transparent);
   border-bottom: 1px solid var(--pr-line);
@@ -150,7 +162,7 @@ const premiumCss = `
 .premium-title {
   margin: 0;
   font-family: var(--font-premium-display), Georgia, serif;
-  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  font-size: clamp(2.2rem, 4cqi, 3.4rem);
   line-height: 1.1;
   font-weight: 400;
   letter-spacing: -0.03em;
@@ -261,7 +273,7 @@ const premiumCss = `
   width: fit-content;
   margin-top: 0.35rem;
 }
-@media (min-width: 768px) {
+@container site (min-width: 768px) {
   .premium-nav { display: flex; }
   .premium-hero-grid { grid-template-columns: 1.15fr 0.85fr; }
   .premium-grid-2 { grid-template-columns: 1fr 1fr; }

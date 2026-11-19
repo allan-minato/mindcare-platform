@@ -7,7 +7,11 @@ import {
   uploadSiteImage,
   type MediaUploadState,
 } from "@/app/(admin)/admin/media/actions";
-import { ALLOWED_IMAGE_TYPES } from "@/lib/media/constants";
+import {
+  ALLOWED_IMAGE_TYPES,
+  isAllowedImageType,
+  MAX_IMAGE_BYTES,
+} from "@/lib/media/constants";
 
 type ImageUploadFieldProps = {
   label: string;
@@ -32,6 +36,16 @@ export function ImageUploadField({
   function handleFileChange(fileList: FileList | null) {
     const file = fileList?.[0];
     if (!file) {
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError("A imagem deve ter no máximo 5 MB.");
+      return;
+    }
+
+    if (!isAllowedImageType(file.type)) {
+      setError("Use JPEG, PNG ou WebP.");
       return;
     }
 

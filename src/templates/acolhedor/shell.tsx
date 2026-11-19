@@ -4,9 +4,12 @@ import {
   formatCouncil,
   previewBannerCss,
   professionalDisplayName,
+  scrollRevealCss,
+  siteNavItems,
   whatsappHref,
   type TemplateShellProps,
 } from "@/templates/shared";
+import { SmoothAnchors } from "@/templates/smooth-anchors";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
@@ -33,12 +36,14 @@ export function AcolhedorShell({
   const brandRole = [specialty || "Psicólogo", council]
     .filter(Boolean)
     .join(" · ");
+  const navItems = siteNavItems(document);
 
   return (
     <div
       className={`${display.variable} ${body.variable} acolhedor-root min-h-full`}
     >
-      <style>{`${previewBannerCss}${acolhedorCss}`}</style>
+      <style>{`${previewBannerCss}${scrollRevealCss}${acolhedorCss}`}</style>
+      <SmoothAnchors />
       {banner}
       <header className="acolhedor-header">
         <div className="acolhedor-wrap acolhedor-header-inner">
@@ -46,15 +51,19 @@ export function AcolhedorShell({
             <span className="acolhedor-brand-name">{name}</span>
             <span className="acolhedor-brand-role">{brandRole}</span>
           </a>
-          <nav className="acolhedor-nav" aria-label="Seções">
-            <a href="#sobre">Sobre</a>
-            <a href="#servicos">Serviços</a>
-            <a href="#contato">Contato</a>
-          </nav>
+          {navItems.length > 0 ? (
+            <nav className="acolhedor-nav" aria-label="Seções">
+              {navItems.map((item) => (
+                <a key={item.href} href={item.href}>
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          ) : null}
           {whatsapp ? (
             <a
               href={whatsapp}
-              className="acolhedor-btn"
+              className="acolhedor-btn acolhedor-header-cta"
               target="_blank"
               rel="noreferrer"
             >
@@ -86,6 +95,8 @@ export function AcolhedorShell({
 
 const acolhedorCss = `
 .acolhedor-root {
+  container-type: inline-size;
+  container-name: site;
   --ac-ink: #121212;
   --ac-ink-soft: #1d1d1d;
   --ac-paper: #fafafa;
@@ -102,12 +113,12 @@ const acolhedorCss = `
   --ac-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ac-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ac-shadow: 0 18px 50px -24px rgba(18, 18, 18, 0.4);
-  --ac-step--1: clamp(0.83rem, 0.78rem + 0.2vw, 0.95rem);
-  --ac-step-0: clamp(1rem, 0.95rem + 0.25vw, 1.13rem);
-  --ac-step-1: clamp(1.2rem, 1.1rem + 0.5vw, 1.5rem);
-  --ac-step-2: clamp(1.6rem, 1.4rem + 1vw, 2.25rem);
-  --ac-step-3: clamp(2.2rem, 1.8rem + 2vw, 3.4rem);
-  --ac-step-4: clamp(2.9rem, 2.2rem + 3.5vw, 5.5rem);
+  --ac-step--1: clamp(0.83rem, 0.78rem + 0.2cqi, 0.95rem);
+  --ac-step-0: clamp(1rem, 0.95rem + 0.25cqi, 1.13rem);
+  --ac-step-1: clamp(1.2rem, 1.1rem + 0.5cqi, 1.5rem);
+  --ac-step-2: clamp(1.6rem, 1.4rem + 1cqi, 2.25rem);
+  --ac-step-3: clamp(2.2rem, 1.8rem + 2cqi, 3.4rem);
+  --ac-step-4: clamp(2.9rem, 2.2rem + 3.5cqi, 5.5rem);
   background: var(--ac-paper);
   color: var(--ac-ink);
   font-family: var(--font-acolhedor-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -121,19 +132,20 @@ const acolhedorCss = `
   width: 100%;
   max-width: 1200px;
   margin-inline: auto;
-  padding-inline: clamp(1.25rem, 5vw, 3rem);
+  padding-inline: clamp(1.25rem, 5cqi, 3rem);
 }
 .acolhedor-wrap-narrow {
   width: 100%;
   max-width: 760px;
   margin-inline: auto;
-  padding-inline: clamp(1.25rem, 5vw, 3rem);
+  padding-inline: clamp(1.25rem, 5cqi, 3rem);
 }
 .acolhedor-header {
-  position: fixed;
-  inset: 0 0 auto 0;
+  position: sticky;
+  top: 0;
   z-index: 50;
-  padding-block: 1.25rem;
+  padding-top: calc(1rem + var(--site-safe-top, env(safe-area-inset-top, 0px)));
+  padding-bottom: 1rem;
   background: rgba(250, 250, 250, 0.85);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -143,11 +155,16 @@ const acolhedorCss = `
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.acolhedor-header-cta {
+  flex-shrink: 0;
 }
 .acolhedor-brand {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   line-height: 1;
   text-decoration: none;
   color: var(--ac-ink);
@@ -157,6 +174,9 @@ const acolhedorCss = `
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .acolhedor-brand-role {
   margin-top: 0.25rem;
@@ -165,11 +185,14 @@ const acolhedorCss = `
   letter-spacing: 0.32em;
   text-transform: uppercase;
   color: var(--ac-gold-deep);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .acolhedor-nav {
   display: none;
   align-items: center;
-  gap: clamp(1.2rem, 2.5vw, 2.4rem);
+  gap: clamp(1.2rem, 2.5cqi, 2.4rem);
 }
 .acolhedor-nav a {
   position: relative;
@@ -257,7 +280,7 @@ const acolhedorCss = `
   border-color: var(--ac-gold);
 }
 .acolhedor-section {
-  padding-block: clamp(4rem, 8vw, 8rem);
+  padding-block: clamp(4rem, 8cqi, 8rem);
   background: var(--ac-paper);
 }
 .acolhedor-section-warm {
@@ -330,10 +353,10 @@ const acolhedorCss = `
 }
 .acolhedor-hero {
   position: relative;
-  min-height: 100vh;
+  min-height: var(--site-vh, 100vh);
   display: flex;
-  align-items: center;
-  padding: 7.5rem 0 4rem;
+  align-items: flex-start;
+  padding: 15.5rem 0 4.5rem;
   overflow: hidden;
   background: var(--ac-paper);
 }
@@ -350,8 +373,8 @@ const acolhedorCss = `
 .acolhedor-hero::after {
   content: "";
   position: absolute;
-  width: min(60vw, 720px);
-  height: min(60vw, 720px);
+  width: min(60cqi, 720px);
+  height: min(60cqi, 720px);
   right: -10%;
   top: 10%;
   background: radial-gradient(circle, var(--ac-gold-soft), transparent 65%);
@@ -596,13 +619,13 @@ const acolhedorCss = `
   text-decoration: none;
 }
 .acolhedor-cta {
-  padding-block: clamp(4rem, 8vw, 8rem);
+  padding-block: clamp(4rem, 8cqi, 8rem);
   background: var(--ac-paper);
 }
 .acolhedor-cta-inner {
   position: relative;
   text-align: center;
-  padding: clamp(3.5rem, 7vw, 6rem) clamp(1.5rem, 5vw, 4rem);
+  padding: clamp(3.5rem, 7cqi, 6rem) clamp(1.5rem, 5cqi, 4rem);
   border-radius: var(--ac-radius-lg);
   background: var(--ac-ink);
   color: var(--ac-paper);
@@ -670,7 +693,24 @@ const acolhedorCss = `
   text-transform: uppercase;
   text-decoration: none;
 }
-@media (min-width: 768px) {
+@container site (max-width: 767px) {
+  .acolhedor-header-cta { display: none; }
+  .acolhedor-brand-name { font-size: 1.2rem; }
+  .acolhedor-brand-role {
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    max-width: 100%;
+  }
+  .acolhedor-btn {
+    padding: 0.85rem 1.25rem;
+  }
+  .acolhedor-hero {
+    padding-top: 3.25rem;
+    padding-bottom: 3rem;
+    align-items: flex-start;
+  }
+}
+@container site (min-width: 768px) {
   .acolhedor-nav { display: flex; }
   .acolhedor-hero-grid { grid-template-columns: 1.15fr 0.85fr; gap: 4rem; }
   .acolhedor-about-grid { grid-template-columns: 0.9fr 1.1fr; }

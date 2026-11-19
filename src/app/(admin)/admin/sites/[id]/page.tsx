@@ -7,6 +7,7 @@ import { SitePublishControls } from "@/app/(admin)/admin/sites/site-publish-cont
 import { SiteSectionsEditor } from "@/app/(admin)/admin/sites/site-sections-editor";
 import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
 import { publicSiteUrl } from "@/lib/sites/host";
+import { getPreviewDocument } from "@/lib/sites/preview";
 import { getSite } from "@/lib/sites/queries";
 import { templateLabel } from "@/lib/templates/registry";
 
@@ -24,9 +25,12 @@ export default async function SiteDetailPage({ params }: PageProps) {
   const admin = await requireAdminProfile();
   const canPublish = hasMinRole(admin.role, "admin");
   const { id } = await params;
-  const site = await getSite(id);
+  const [site, baseDocument] = await Promise.all([
+    getSite(id),
+    getPreviewDocument(id),
+  ]);
 
-  if (!site) {
+  if (!site || !baseDocument) {
     notFound();
   }
 
@@ -35,45 +39,46 @@ export default async function SiteDetailPage({ params }: PageProps) {
   const statusLabel = isLive
     ? `No ar · v${site.published_version ?? "—"} · ${formatPublishedAt(site.published_at)}`
     : "Rascunho — ainda não está no ar";
+  const previewHref = `/preview/${site.id}`;
 
-  return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
-      <div className="grid gap-2">
-        <Link
-          href="/admin/sites"
-          className="text-sm text-zinc-500 underline-offset-4 hover:underline"
-        >
-          Voltar
-        </Link>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="grid gap-2">
-            <h1 className="text-3xl font-semibold tracking-tight">
-              {site.name}
-            </h1>
-            <p className="text-sm text-zinc-500">
-              {site.slug}
-              {" · "}
-              {templateLabel(site.template_key)}
-              {" · "}
-              <Link
-                href={`/admin/professionals/${site.professional_id}`}
-                className="underline-offset-4 hover:underline"
-              >
-                {site.professional_name}
-              </Link>
-            </p>
-          </div>
-          <Link
-            href={`/preview/${site.id}`}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
-          >
-            Ver prévia
-          </Link>
+  const header = (
+    <div className="grid gap-2">
+      <Link
+        href="/admin/sites"
+        className="text-sm text-zinc-500 underline-offset-4 hover:underline"
+      >
+        Voltar
+      </Link>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="grid gap-2">
+          <h1 className="text-3xl font-semibold tracking-tight">{site.name}</h1>
+          <p className="text-sm text-zinc-500">
+            {site.slug}
+            {" · "}
+            {templateLabel(site.template_key)}
+            {" · "}
+            <Link
+              href={`/admin/professionals/${site.professional_id}`}
+              className="underline-offset-4 hover:underline"
+            >
+              {site.professional_name}
+            </Link>
+          </p>
         </div>
+        <Link
+          href={previewHref}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
+        >
+          Ver prévia
+        </Link>
       </div>
+    </div>
+  );
 
+  const aside = (
+    <>
       <section className="grid gap-3">
         <h2 className="text-lg font-medium">Publicação</h2>
         {canPublish ? (
@@ -132,21 +137,29 @@ export default async function SiteDetailPage({ params }: PageProps) {
           canManage={canPublish}
         />
       </section>
+    </>
+  );
 
-      <section className="grid gap-3">
-        <div className="grid gap-1">
-          <h2 className="text-lg font-medium">Seções</h2>
-          <p className="text-sm text-zinc-500">
-            Edite textos, ordem e visibilidade. Salvar recarrega o mesmo
-            conteúdo. Alterações só entram no ar ao publicar de novo.
-          </p>
-        </div>
-        {site.home_page ? (
-          <SiteSectionsEditor siteId={site.id} sections={sections} />
-        ) : (
-          <p className="text-sm text-zinc-500">Nenhuma seção para editar.</p>
-        )}
-      </section>
+  if (!site.home_page) {
+    return (
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
+        {header}
+        {aside}
+        <p className="text-sm text-zinc-500">Nenhuma seção para editar.</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="flex min-h-0 w-full flex-1 flex-col">
+      <SiteSectionsEditor
+        siteId={site.id}
+        sections={sections}
+        baseDocument={baseDocument}
+        fullPreviewHref={previewHref}
+        header={header}
+        aside={aside}
+      />
     </main>
   );
 }

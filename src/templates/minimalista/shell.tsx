@@ -4,9 +4,12 @@ import {
   formatCouncil,
   previewBannerCss,
   professionalDisplayName,
+  scrollRevealCss,
+  siteNavItems,
   whatsappHref,
   type TemplateShellProps,
 } from "@/templates/shared";
+import { SmoothAnchors } from "@/templates/smooth-anchors";
 
 const display = Instrument_Serif({
   subsets: ["latin"],
@@ -27,23 +30,29 @@ export function MinimalistaShell({
   const name = professionalDisplayName(document.professional);
   const whatsapp = whatsappHref(document.professional.whatsapp);
   const council = formatCouncil(document.professional);
+  const navItems = siteNavItems(document);
 
   return (
     <div
       className={`${display.variable} ${body.variable} minimalista-root min-h-full`}
     >
-      <style>{`${previewBannerCss}${minimalistaCss}`}</style>
+      <style>{`${previewBannerCss}${scrollRevealCss}${minimalistaCss}`}</style>
+      <SmoothAnchors />
       {banner}
       <header className="minimalista-header">
         <div className="minimalista-wrap minimalista-header-inner">
           <a href="#inicio" className="minimalista-brand">
             {name}
           </a>
-          <nav className="minimalista-nav" aria-label="Seções">
-            <a href="#sobre">Sobre</a>
-            <a href="#servicos">Serviços</a>
-            <a href="#contato">Contato</a>
-          </nav>
+          {navItems.length > 0 ? (
+            <nav className="minimalista-nav" aria-label="Seções">
+              {navItems.map((item) => (
+                <a key={item.href} href={item.href}>
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          ) : null}
           {whatsapp ? (
             <a
               href={whatsapp}
@@ -69,6 +78,8 @@ export function MinimalistaShell({
 
 const minimalistaCss = `
 .minimalista-root {
+  container-type: inline-size;
+  container-name: site;
   --mn-bg: #fafafa;
   --mn-ink: #171717;
   --mn-muted: #737373;
@@ -85,6 +96,7 @@ const minimalistaCss = `
 .minimalista-header {
   border-bottom: 1px solid var(--mn-line);
   background: var(--mn-bg);
+  padding-top: var(--site-safe-top, env(safe-area-inset-top, 0px));
 }
 .minimalista-header-inner {
   display: flex;
@@ -130,7 +142,7 @@ const minimalistaCss = `
 .minimalista-title {
   margin: 0;
   font-family: var(--font-minimalista-display), Georgia, serif;
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(2rem, 4cqi, 3rem);
   line-height: 1.15;
   font-weight: 400;
   letter-spacing: -0.03em;
@@ -212,7 +224,7 @@ const minimalistaCss = `
   font-family: var(--font-minimalista-display), Georgia, serif;
   font-size: 1.25rem;
 }
-@media (min-width: 768px) {
+@container site (min-width: 768px) {
   .minimalista-nav { display: flex; }
 }
 `;
