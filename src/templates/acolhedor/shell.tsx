@@ -1,7 +1,13 @@
 import { Cormorant_Garamond, Outfit } from "next/font/google";
 
 import {
+  attendanceSummary,
+  footerBrandBlurb,
+  footerNavItems,
   formatCouncil,
+  formatPhoneDisplay,
+  instagramHref,
+  instagramLabel,
   previewBannerCss,
   professionalDisplayName,
   scrollRevealCss,
@@ -31,14 +37,25 @@ export function AcolhedorShell({
   basePath = "",
   children,
 }: TemplateShellProps) {
-  const name = professionalDisplayName(document.professional);
-  const whatsapp = whatsappHref(document.professional.whatsapp);
-  const council = formatCouncil(document.professional);
-  const specialty = document.professional.specialty?.trim();
+  const professional = document.professional;
+  const name = professionalDisplayName(professional);
+  const whatsapp = whatsappHref(professional.whatsapp);
+  const whatsappLabel = formatPhoneDisplay(professional.whatsapp);
+  const council = formatCouncil(professional);
+  const specialty = professional.specialty?.trim();
   const brandRole = [specialty || "Psicólogo", council]
     .filter(Boolean)
     .join(" · ");
   const navItems = siteNavItems(document, basePath);
+  const footerNav = footerNavItems(document, basePath);
+  const brandBlurb = footerBrandBlurb(professional);
+  const igHref = instagramHref(professional.social_links);
+  const igLabel = instagramLabel(professional.social_links);
+  const placeLine = attendanceSummary(professional);
+  const year = new Date().getFullYear();
+  const copyrightBits = [name, specialty || "Psicólogo", council]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div
@@ -76,22 +93,134 @@ export function AcolhedorShell({
       </header>
       <main>{children}</main>
       <footer className="acolhedor-footer">
-        <div className="acolhedor-wrap acolhedor-footer-inner">
-          <p className="acolhedor-footer-name">{name}</p>
-          {council ? <p className="acolhedor-footer-muted">{council}</p> : null}
-          {whatsapp ? (
-            <a
-              href={whatsapp}
-              className="acolhedor-footer-link"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Falar no WhatsApp
-            </a>
-          ) : null}
+        <div className="acolhedor-wrap">
+          <div className="acolhedor-footer-grid">
+            <div className="acolhedor-footer-brand">
+              <p className="acolhedor-footer-name">{name}</p>
+              <p className="acolhedor-footer-blurb">{brandBlurb}</p>
+            </div>
+
+            <div className="acolhedor-footer-col">
+              <h3>Navegação</h3>
+              <ul>
+                {footerNav.map((item) => (
+                  <li key={`${item.label}-${item.href}`}>
+                    <a href={item.href}>{item.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="acolhedor-footer-col">
+              <h3>Contato</h3>
+              <ul>
+                {whatsapp ? (
+                  <li>
+                    <a href={whatsapp} target="_blank" rel="noreferrer">
+                      <FooterIconWhatsApp />
+                      {whatsappLabel || "WhatsApp"}
+                    </a>
+                  </li>
+                ) : null}
+                {igHref && igLabel ? (
+                  <li>
+                    <a href={igHref} target="_blank" rel="noreferrer">
+                      <FooterIconInstagram />
+                      {igLabel}
+                    </a>
+                  </li>
+                ) : null}
+                {placeLine ? (
+                  <li className="acolhedor-footer-plain">
+                    <FooterIconPin />
+                    {placeLine}
+                  </li>
+                ) : null}
+              </ul>
+            </div>
+          </div>
+
+          <div className="acolhedor-footer-bottom">
+            <p>
+              © {year} {copyrightBits}.
+            </p>
+            <div className="acolhedor-footer-social">
+              {whatsapp ? (
+                <a
+                  href={whatsapp}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="WhatsApp"
+                >
+                  <FooterIconWhatsApp />
+                </a>
+              ) : null}
+              {igHref ? (
+                <a
+                  href={igHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Instagram"
+                >
+                  <FooterIconInstagram />
+                </a>
+              ) : null}
+            </div>
+          </div>
         </div>
       </footer>
     </div>
+  );
+}
+
+function FooterIconWhatsApp() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      aria-hidden="true"
+    >
+      <path d="M21 11.5a8.4 8.4 0 01-12.2 7.5L3 21l2-5.8A8.5 8.5 0 1121 11.5z" />
+    </svg>
+  );
+}
+
+function FooterIconInstagram() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      aria-hidden="true"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function FooterIconPin() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      aria-hidden="true"
+    >
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
   );
 }
 
@@ -669,31 +798,99 @@ const acolhedorCss = `
 .acolhedor-footer {
   background: var(--ac-ink);
   color: var(--ac-paper);
-  padding: 3.5rem 0;
+  padding: 4rem 0 2.5rem;
 }
-.acolhedor-footer-inner {
+.acolhedor-footer-grid {
   display: grid;
-  gap: 0.45rem;
+  gap: 2.5rem;
+}
+.acolhedor-footer-brand {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 28rem;
 }
 .acolhedor-footer-name {
   margin: 0;
   font-family: var(--font-acolhedor-display), Georgia, serif;
   font-size: var(--ac-step-2);
   font-weight: 500;
+  letter-spacing: -0.02em;
 }
-.acolhedor-footer-muted {
+.acolhedor-footer-blurb {
   margin: 0;
   color: var(--ac-muted-dark);
-}
-.acolhedor-footer-link {
-  margin-top: 0.85rem;
-  width: fit-content;
-  color: var(--ac-gold);
   font-size: var(--ac-step--1);
+  font-weight: 300;
+  line-height: 1.7;
+}
+.acolhedor-footer-col h3 {
+  margin: 0 0 1rem;
+  color: var(--ac-gold);
+  font-size: 0.72rem;
   font-weight: 500;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+.acolhedor-footer-col ul {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.acolhedor-footer-col a,
+.acolhedor-footer-plain {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--ac-muted-dark);
+  font-size: var(--ac-step--1);
+  font-weight: 300;
   text-decoration: none;
+  transition: color 0.25s var(--ac-ease);
+}
+.acolhedor-footer-col a:hover {
+  color: var(--ac-paper);
+}
+.acolhedor-footer-col svg {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+.acolhedor-footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ac-line-light);
+}
+.acolhedor-footer-bottom p {
+  margin: 0;
+  color: var(--ac-muted-dark);
+  font-size: 0.8rem;
+  font-weight: 300;
+}
+.acolhedor-footer-social {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.acolhedor-footer-social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--ac-line-light);
+  border-radius: 999px;
+  color: var(--ac-muted-dark);
+  transition: color 0.25s var(--ac-ease), border-color 0.25s var(--ac-ease);
+}
+.acolhedor-footer-social a:hover {
+  color: var(--ac-gold);
+  border-color: var(--ac-gold);
 }
 @container site (max-width: 767px) {
   .acolhedor-header-cta { display: none; }
@@ -720,5 +917,10 @@ const acolhedorCss = `
   .acolhedor-grid-3,
   .acolhedor-list-cards.acolhedor-grid-3,
   .acolhedor-steps { grid-template-columns: repeat(3, 1fr); }
+  .acolhedor-footer-grid {
+    grid-template-columns: 1.4fr 0.8fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
 }
 `;

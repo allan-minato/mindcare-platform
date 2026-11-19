@@ -7,6 +7,8 @@ import type {
 } from "@/lib/sites/document";
 import { AcolhedorShell } from "@/templates/acolhedor/shell";
 import {
+  instagramHref,
+  instagramLabel,
   professionalDisplayName,
   siteHref,
   whatsappHref,
@@ -30,7 +32,8 @@ export function AcolhedorBlogList({
 }: BlogProps) {
   const blog = document.blog;
   const whatsapp = whatsappHref(document.professional.whatsapp);
-  const instagram = instagramHandle(document.professional.social_links);
+  const igHref = instagramHref(document.professional.social_links);
+  const igLabel = instagramLabel(document.professional.social_links);
   const name = professionalDisplayName(document.professional);
 
   return (
@@ -90,17 +93,17 @@ export function AcolhedorBlogList({
 
           <p className="acolhedor-blog-footnote">
             Novos artigos em breve.
-            {instagram ? (
+            {igHref && igLabel ? (
               <>
                 {" "}
                 Acompanhe também no Instagram{" "}
                 <a
                   className="acolhedor-blog-text-link"
-                  href={`https://instagram.com/${instagram.replace(/^@/, "")}`}
+                  href={igHref}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {instagram.startsWith("@") ? instagram : `@${instagram}`}
+                  {igLabel}
                 </a>
               </>
             ) : null}
@@ -243,14 +246,6 @@ function readingTimeLabel(markdown: string) {
   const words = markdown.trim().split(/\s+/).filter(Boolean).length;
   const minutes = Math.max(1, Math.ceil(words / 200));
   return `${minutes} min de leitura`;
-}
-
-function instagramHandle(social: unknown): string | null {
-  if (!social || typeof social !== "object" || Array.isArray(social)) {
-    return null;
-  }
-  const value = (social as Record<string, unknown>).instagram;
-  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function formatPostDate(value: string | null | undefined) {

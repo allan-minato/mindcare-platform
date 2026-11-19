@@ -158,6 +158,173 @@ export function formatCouncil(
   return `${council} ${registration}`;
 }
 
+/** Nav do footer: Início + seções + Blog, com hrefs que funcionam fora da home. */
+export function footerNavItems(
+  document: SiteDocument,
+  basePath = "",
+): SiteNavItem[] {
+  const sections = homeSections(document);
+  const items: SiteNavItem[] = [
+    { href: siteHref("/", basePath), label: "Início" },
+  ];
+
+  for (const { module, label } of PRIMARY_NAV) {
+    const section = sections.find(
+      (item) => item.module === module && sectionHasNavContent(item),
+    );
+    if (!section) {
+      continue;
+    }
+    items.push({
+      href: siteHref(`/#${section.key}`, basePath),
+      label,
+    });
+  }
+
+  if (document.blog.enabled && document.blog.posts.length > 0) {
+    const contactIndex = items.findIndex((item) => item.label === "Contato");
+    const blogItem: SiteNavItem = {
+      href: siteHref("/blog", basePath),
+      label: "Blog",
+    };
+    if (contactIndex >= 0) {
+      items.splice(contactIndex, 0, blogItem);
+    } else {
+      items.push(blogItem);
+    }
+  }
+
+  return items;
+}
+
+function asStringRecord(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  const result: Record<string, string> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (typeof entry === "string" && entry.trim()) {
+      result[key] = entry.trim();
+    }
+  }
+  return result;
+}
+
+export function instagramHandle(
+  social: unknown,
+): string | null {
+  const value = asStringRecord(social).instagram;
+  return value || null;
+}
+
+export function instagramHref(social: unknown): string | null {
+  const handle = instagramHandle(social);
+  if (!handle) {
+    return null;
+  }
+  const clean = handle.replace(/^@/, "");
+  return `https://instagram.com/${clean}`;
+}
+
+export function instagramLabel(social: unknown): string | null {
+  const handle = instagramHandle(social);
+  if (!handle) {
+    return null;
+  }
+  return handle.startsWith("@") ? handle : `@${handle}`;
+}
+
+export function officeLocationLabel(
+  professional: SiteDocumentProfessional,
+): string | null {
+  const office = asStringRecord(professional.office_address);
+  const city = office.city;
+  const state = office.state;
+  if (city && state) {
+    return `${city}/${state}`;
+  }
+  return city || state || null;
+}
+
+export function attendanceSummary(
+  professional: SiteDocumentProfessional,
+): string | null {
+  const location = officeLocationLabel(professional);
+  const modes = new Set(professional.attendance_modes ?? []);
+  const parts: string[] = [];
+
+  if (modes.has("in_person") && location) {
+    parts.push(location);
+  } else if (modes.has("in_person")) {
+    parts.push("Presencial");
+  }
+
+  if (modes.has("online")) {
+    parts.push("Online");
+  }
+
+  if (parts.length === 0) {
+    return location;
+  }
+  return parts.join(" · ");
+}
+
+/** Formata WhatsApp/telefone para exibição: (48) 99121-8576 */
+export function formatPhoneDisplay(
+  phone: string | null | undefined,
+): string | null {
+  if (!phone?.trim()) {
+    return null;
+  }
+  const digits = phone.replace(/\D/g, "");
+  let national = digits;
+  if (national.startsWith("55") && national.length >= 12) {
+    national = national.slice(2);
+  }
+  if (national.length === 11) {
+    return `(${national.slice(0, 2)}) ${national.slice(2, 7)}-${national.slice(7)}`;
+  }
+  if (national.length === 10) {
+    return `(${national.slice(0, 2)}) ${national.slice(2, 6)}-${national.slice(6)}`;
+  }
+  return phone.trim();
+}
+
+/** Texto curto de marca no footer (estilo Kalil). */
+export function footerBrandBlurb(
+  professional: SiteDocumentProfessional,
+): string {
+  const specialty =
+    professional.specialty?.trim() || "Psicólogo clínico";
+  const council = formatCouncil(professional);
+  const modes = new Set(professional.attendance_modes ?? []);
+  const location = officeLocationLabel(professional);
+  const attendanceParts: string[] = [];
+
+  if (modes.has("in_person")) {
+    attendanceParts.push(
+      location
+        ? `presencial em ${location}`
+        : "presencial",
+    );
+  }
+  if (modes.has("online")) {
+    attendanceParts.push("online");
+  }
+
+  const head = council
+    ? `${specialty} (${council}).`
+    : `${specialty}.`;
+  if (attendanceParts.length === 0) {
+    return `${head} Psicoterapia individual com escuta atenta e método.`;
+  }
+  const joined =
+    attendanceParts.length === 1
+      ? attendanceParts[0]
+      : `${attendanceParts[0]} e ${attendanceParts[1]}`;
+  return `${head} Atendimento ${joined}.`;
+}
+
 export function heroDefaults(document: SiteDocument, headline: string, support: string) {
   const name = professionalDisplayName(document.professional);
   return {

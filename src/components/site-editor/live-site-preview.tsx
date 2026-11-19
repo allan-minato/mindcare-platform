@@ -374,7 +374,11 @@ function resolvePreviewHref(href: string, previewBase: string): string | null {
   if (href.startsWith("/blog")) {
     return `${base}${href}`;
   }
-  if (href.startsWith(`${base}/`) || href === base) {
+  if (
+    href === base ||
+    href.startsWith(`${base}/`) ||
+    href.startsWith(`${base}#`)
+  ) {
     return href;
   }
   return null;
