@@ -4,6 +4,12 @@ import { notFound } from "next/navigation";
 
 import { updateBlogSettings } from "@/app/(admin)/admin/sites/blog-actions";
 import { BlogSettingsForm } from "@/app/(admin)/admin/sites/blog-settings-form";
+import {
+  PortalPage,
+  PortalPageHeader,
+  PortalSection,
+  StatusChip,
+} from "@/components/portal";
 import { requireProfessionalProfile } from "@/lib/auth/professional";
 import {
   blogSettingsFromSiteSeo,
@@ -34,58 +40,54 @@ export default async function AppSiteBlogPage({ params }: PageProps) {
   const saveSettings = updateBlogSettings.bind(null, id, "app");
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-10">
-      <div className="grid gap-2">
-        <Link
-          href={`/app/sites/${id}`}
-          className="text-sm text-zinc-500 underline-offset-4 hover:underline"
-        >
-          Voltar à página inicial
-        </Link>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="grid gap-1">
-            <h1 className="text-3xl font-semibold tracking-tight">Blog</h1>
-            <p className="text-sm text-zinc-500">{site.name}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+    <PortalPage>
+      <PortalPageHeader
+        backHref={`/app/sites/${id}`}
+        backLabel="Voltar à página inicial"
+        kicker="Blog"
+        title="Blog"
+        lead={site.name}
+        actions={
+          <>
             <Link
               href={`/preview/${id}/blog`}
               target="_blank"
               rel="noreferrer"
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
+              className="portal-btn portal-btn-ghost"
             >
               Prévia
             </Link>
             <Link
               href={`/app/sites/${id}/blog/new`}
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+              className="portal-btn portal-btn-primary"
             >
               Novo post
             </Link>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      <section className="grid gap-3">
-        <h2 className="text-lg font-medium">Página /blog</h2>
+      <PortalSection
+        title="Página /blog"
+        description="Título e introdução da listagem pública."
+      >
         <BlogSettingsForm
           action={saveSettings}
           initialTitle={settings.title}
           initialIntro={settings.intro}
         />
-      </section>
+      </PortalSection>
 
-      <section className="grid gap-3">
-        <h2 className="text-lg font-medium">Posts ({posts.length})</h2>
+      <PortalSection
+        title={`Posts (${posts.length})`}
+        description="Rascunhos e artigos prontos para a equipe publicar no snapshot."
+      >
         {posts.length === 0 ? (
-          <p className="text-sm text-zinc-500">Nenhum post ainda.</p>
+          <p className="portal-hint">Nenhum post ainda.</p>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <div className="portal-list">
             {posts.map((post) => (
-              <li
-                key={post.id}
-                className="flex flex-wrap items-start justify-between gap-3 py-4"
-              >
+              <div key={post.id} className="portal-list-item">
                 <div className="grid gap-1">
                   <Link
                     href={`/app/sites/${id}/blog/${post.id}`}
@@ -93,23 +95,27 @@ export default async function AppSiteBlogPage({ params }: PageProps) {
                   >
                     {post.title}
                   </Link>
-                  <p className="text-sm text-zinc-500">
+                  <p className="portal-hint" style={{ margin: 0 }}>
                     /blog/{post.slug}
-                    {" · "}
-                    {post.status === "published" ? "Pronto" : "Rascunho"}
                   </p>
                 </div>
-                <Link
-                  href={`/app/sites/${id}/blog/${post.id}`}
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700"
-                >
-                  Editar
-                </Link>
-              </li>
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusChip
+                    live={post.status === "published"}
+                    label={post.status === "published" ? "Pronto" : "Rascunho"}
+                  />
+                  <Link
+                    href={`/app/sites/${id}/blog/${post.id}`}
+                    className="portal-btn portal-btn-ghost"
+                  >
+                    Editar
+                  </Link>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
-      </section>
-    </main>
+      </PortalSection>
+    </PortalPage>
   );
 }

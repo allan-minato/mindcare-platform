@@ -5,6 +5,12 @@ import { notFound } from "next/navigation";
 import { SiteDomainsPanel } from "@/app/(admin)/admin/sites/site-domains-panel";
 import { SitePublishControls } from "@/app/(admin)/admin/sites/site-publish-controls";
 import { SiteSectionsEditor } from "@/app/(admin)/admin/sites/site-sections-editor";
+import {
+  PortalPage,
+  PortalPageHeader,
+  PortalSection,
+  StatusChip,
+} from "@/components/portal";
 import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
 import { publicSiteUrl } from "@/lib/sites/host";
 import { getPreviewDocument } from "@/lib/sites/preview";
@@ -42,33 +48,36 @@ export default async function SiteDetailPage({ params }: PageProps) {
   const previewHref = `/preview/${site.id}`;
 
   const header = (
-    <div className="grid gap-2">
-      <Link
-        href="/admin/sites"
-        className="text-sm text-zinc-500 underline-offset-4 hover:underline"
-      >
-        Voltar
-      </Link>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="grid gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight">{site.name}</h1>
-          <p className="text-sm text-zinc-500">
-            {site.slug}
-            {" · "}
-            {templateLabel(site.template_key)}
-            {" · "}
-            <Link
-              href={`/admin/professionals/${site.professional_id}`}
-              className="underline-offset-4 hover:underline"
-            >
-              {site.professional_name}
-            </Link>
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+    <PortalPageHeader
+      backHref="/admin/sites"
+      backLabel="Voltar"
+      kicker="Editor"
+      title={site.name}
+      lead={
+        <>
+          {site.slug}
+          {" · "}
+          {templateLabel(site.template_key)}
+          {" · "}
+          <Link
+            href={`/admin/professionals/${site.professional_id}`}
+            className="underline-offset-4 hover:underline"
+          >
+            {site.professional_name}
+          </Link>
+        </>
+      }
+      actions={
+        <>
+          <StatusChip
+            live={isLive}
+            label={
+              isLive ? `No ar · v${site.published_version ?? "—"}` : "Rascunho"
+            }
+          />
           <Link
             href={`/admin/sites/${site.id}/blog`}
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
+            className="portal-btn portal-btn-ghost"
           >
             Blog
           </Link>
@@ -76,19 +85,18 @@ export default async function SiteDetailPage({ params }: PageProps) {
             href={previewHref}
             target="_blank"
             rel="noreferrer"
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
+            className="portal-btn portal-btn-primary"
           >
             Ver prévia
           </Link>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 
   const aside = (
     <>
-      <section className="grid gap-3">
-        <h2 className="text-lg font-medium">Publicação</h2>
+      <PortalSection title="Publicação" description={statusLabel}>
         {canPublish ? (
           <SitePublishControls
             siteId={site.id}
@@ -97,7 +105,7 @@ export default async function SiteDetailPage({ params }: PageProps) {
             statusLabel={statusLabel}
           />
         ) : (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="portal-hint" style={{ margin: 0 }}>
             {statusLabel}
             {isLive ? (
               <>
@@ -115,46 +123,39 @@ export default async function SiteDetailPage({ params }: PageProps) {
             . Sua conta pode ver, mas não publicar.
           </p>
         )}
-      </section>
+      </PortalSection>
 
-      <section className="grid gap-3">
-        <h2 className="text-lg font-medium">Página inicial</h2>
+      <PortalSection title="Página inicial">
         {site.home_page ? (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="portal-hint" style={{ margin: 0 }}>
             {site.home_page.path} — {site.home_page.title} · {sections.length}{" "}
             seções
           </p>
         ) : (
-          <p className="text-sm text-red-700 dark:text-red-400">
-            Página `/` não encontrada.
-          </p>
+          <p className="portal-error">Página `/` não encontrada.</p>
         )}
-      </section>
+      </PortalSection>
 
-      <section className="grid gap-3">
-        <div className="grid gap-1">
-          <h2 className="text-lg font-medium">Domínios</h2>
-          <p className="text-sm text-zinc-500">
-            Cadastre o host do cliente e marque como verificado para o
-            snapshot público resolver pelo domínio personalizado.
-          </p>
-        </div>
+      <PortalSection
+        title="Domínios"
+        description="Cadastre o host do cliente e marque como verificado para o snapshot público resolver pelo domínio personalizado."
+      >
         <SiteDomainsPanel
           siteId={site.id}
           domains={site.domains}
           canManage={canPublish}
         />
-      </section>
+      </PortalSection>
     </>
   );
 
   if (!site.home_page) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
+      <PortalPage>
         {header}
         {aside}
-        <p className="text-sm text-zinc-500">Nenhuma seção para editar.</p>
-      </main>
+        <p className="portal-hint">Nenhuma seção para editar.</p>
+      </PortalPage>
     );
   }
 

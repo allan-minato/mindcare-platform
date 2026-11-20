@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
@@ -7,8 +6,10 @@ import {
   updateSitePost,
 } from "@/app/(admin)/admin/sites/blog-actions";
 import { BlogPostForm } from "@/app/(admin)/admin/sites/blog-post-form";
+import { PortalPageHeader } from "@/components/portal";
 import { requireProfessionalProfile } from "@/lib/auth/professional";
 import { getSitePost } from "@/lib/sites/post-queries";
+import { getPreviewDocument } from "@/lib/sites/preview";
 import { getSite } from "@/lib/sites/queries";
 
 export const instant = false;
@@ -24,38 +25,44 @@ type PageProps = {
 export default async function AppEditBlogPostPage({ params }: PageProps) {
   const profile = await requireProfessionalProfile();
   const { id, postId } = await params;
-  const [site, post] = await Promise.all([
+  const [site, post, previewDocument] = await Promise.all([
     getSite(id),
     getSitePost(id, postId),
+    getPreviewDocument(id),
   ]);
 
   if (
     !site ||
     site.professional_id !== profile.professionalId ||
-    !post
+    !post ||
+    !previewDocument
   ) {
     notFound();
   }
 
   const action = updateSitePost.bind(null, id, postId, "app");
   const remove = deleteSitePost.bind(null, id, postId, "app");
+  const previewBasePath = `/preview/${id}`;
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10">
-      <div className="grid gap-2">
-        <Link
-          href={`/app/sites/${id}/blog`}
-          className="text-sm text-zinc-500 underline-offset-4 hover:underline"
-        >
-          Voltar ao blog
-        </Link>
-        <h1 className="text-3xl font-semibold tracking-tight">{post.title}</h1>
-      </div>
+    <main className="flex min-h-0 w-full flex-1 flex-col">
       <BlogPostForm
         action={action}
         post={post}
         deleteAction={remove}
         cancelHref={`/app/sites/${id}/blog`}
+        previewDocument={previewDocument}
+        previewBasePath={previewBasePath}
+        fullPreviewHref={`${previewBasePath}/blog/${post.slug}`}
+        header={
+          <PortalPageHeader
+            backHref={`/app/sites/${id}/blog`}
+            backLabel="Voltar ao blog"
+            kicker="Blog"
+            title={post.title}
+            lead={`/blog/${post.slug}`}
+          />
+        }
       />
     </main>
   );

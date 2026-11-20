@@ -60,26 +60,28 @@ export function CreateSiteWorkspace({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-2 border-b border-zinc-200 px-6 py-2 lg:hidden dark:border-zinc-800">
+      <div className="flex items-center gap-2 border-b border-[#e4ddd2] px-6 py-2 lg:hidden">
         <button
           type="button"
           onClick={() => setMobileTab("form")}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+          className="rounded-md px-3 py-1.5 text-sm font-semibold"
+          style={
             mobileTab === "form"
-              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-              : "text-zinc-600 dark:text-zinc-400"
-          }`}
+              ? { background: "#141210", color: "#fffcf8" }
+              : { background: "transparent", color: "#5c564e" }
+          }
         >
           Formulário
         </button>
         <button
           type="button"
           onClick={() => setMobileTab("preview")}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+          className="rounded-md px-3 py-1.5 text-sm font-semibold"
+          style={
             mobileTab === "preview"
-              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-              : "text-zinc-600 dark:text-zinc-400"
-          }`}
+              ? { background: "#141210", color: "#fffcf8" }
+              : { background: "transparent", color: "#5c564e" }
+          }
         >
           Prévia
         </button>
@@ -98,7 +100,7 @@ export function CreateSiteWorkspace({
         </div>
 
         <div
-          className={`min-h-[70vh] border-t border-zinc-200 bg-zinc-50 px-3 pb-2 pt-1 lg:sticky lg:top-0 lg:h-[100dvh] lg:max-h-[100dvh] lg:border-t-0 lg:border-l dark:border-zinc-800 dark:bg-zinc-900/40 ${
+          className={`min-h-[70vh] border-t border-[#e4ddd2] bg-[#f3efe8] px-3 pb-2 pt-1 lg:sticky lg:top-0 lg:h-[100dvh] lg:max-h-[100dvh] lg:border-t-0 lg:border-l ${
             mobileTab === "preview" ? "block" : "hidden lg:block"
           }`}
         >

@@ -28,7 +28,7 @@ const optionalHttpsUrl = z
   .string()
   .transform(emptyToNull)
   .refine((value) => value === null || /^https:\/\//.test(value), {
-    message: "A URL da capa precisa começar com https://.",
+    message: "A imagem de capa precisa de um link https:// público.",
   });
 
 export const sitePostFormSchema = z.object({

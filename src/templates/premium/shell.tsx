@@ -111,8 +111,8 @@ const premiumCss = `
   top: 0;
   z-index: 20;
   padding-top: var(--site-safe-top, env(safe-area-inset-top, 0px));
-  backdrop-filter: blur(12px);
-  background: color-mix(in srgb, var(--pr-bg) 88%, transparent);
+  /* Fundo sólido: backdrop-filter + CSS zoom na prévia mobile gera véu. */
+  background: var(--pr-bg);
   border-bottom: 1px solid var(--pr-line);
 }
 .premium-header-inner {

@@ -1,79 +1,94 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { signOut } from "@/app/login/actions";
 import {
   adminRoleLabel,
   hasMinRole,
-  type AdminProfile,
-} from "@/lib/auth/admin";
+  type AdminRole,
+} from "@/lib/auth/roles";
 
-export function AdminHeader({ admin }: { admin: AdminProfile }) {
+type AdminHeaderProfile = {
+  id: string;
+  fullName: string;
+  role: AdminRole;
+};
+
+export function AdminHeader({ admin }: { admin: AdminHeaderProfile }) {
+  const pathname = usePathname();
   const canManageTeam = hasMinRole(admin.role, "super_admin");
 
+  const items = [
+    { href: "/admin", label: "Início", match: (p: string) => p === "/admin" || p === "/admin/" },
+    {
+      href: "/admin/professionals",
+      label: "Profissionais",
+      match: (p: string) => p.startsWith("/admin/professionals"),
+    },
+    {
+      href: "/admin/sites",
+      label: "Sites",
+      match: (p: string) => p.startsWith("/admin/sites"),
+    },
+    ...(canManageTeam
+      ? [
+          {
+            href: "/admin/team",
+            label: "Equipe",
+            match: (p: string) => p.startsWith("/admin/team"),
+          },
+        ]
+      : []),
+  ];
+
   return (
-    <header className="border-b border-zinc-200 dark:border-zinc-800">
-      <div className="flex items-center justify-between gap-4 px-6 py-4">
-        <div className="grid gap-0.5">
-          <p className="text-sm text-zinc-500">MindCare</p>
-          <p className="font-medium">{admin.fullName}</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <p className="text-sm text-zinc-500">{adminRoleLabel(admin.role)}</p>
+    <header className="portal-header">
+      <div className="portal-header-inner">
+        <Link href="/admin" className="portal-brand">
+          <span className="portal-brand-mark">
+            Mind<em>Care</em>
+          </span>
+          <span className="portal-brand-user">{admin.fullName}</span>
+        </Link>
+
+        <div className="portal-header-actions">
+          <span className="portal-chip portal-chip-draft">
+            {adminRoleLabel(admin.role)}
+          </span>
+          <nav className="portal-nav" aria-label="Admin">
+            {items.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                data-active={item.match(pathname) ? "true" : "false"}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
           <form action={signOut}>
-            <button
-              type="submit"
-              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium dark:border-zinc-700"
-            >
+            <button type="submit" className="portal-btn portal-btn-ghost">
               Sair
             </button>
           </form>
         </div>
       </div>
-      <nav className="flex gap-4 px-6 pb-3 text-sm">
-        <Link href="/admin" className="text-zinc-600 underline-offset-4 hover:underline dark:text-zinc-400">
-          Início
-        </Link>
-        <Link
-          href="/admin/professionals"
-          className="text-zinc-600 underline-offset-4 hover:underline dark:text-zinc-400"
-        >
-          Profissionais
-        </Link>
-        <Link
-          href="/admin/sites"
-          className="text-zinc-600 underline-offset-4 hover:underline dark:text-zinc-400"
-        >
-          Sites
-        </Link>
-        {canManageTeam ? (
-          <Link
-            href="/admin/team"
-            className="text-zinc-600 underline-offset-4 hover:underline dark:text-zinc-400"
-          >
-            Equipe
-          </Link>
-        ) : null}
-      </nav>
     </header>
   );
 }
 
 export function AccessDenied() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-6 px-6 py-16">
-      <div className="flex flex-col gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Sem acesso ao painel
-        </h1>
-        <p className="leading-7 text-zinc-600 dark:text-zinc-400">
-          Esta conta não faz parte da equipe.
-        </p>
-      </div>
+    <main className="portal-denied">
+      <p className="portal-kicker">Admin</p>
+      <h1 className="portal-title">Sem acesso ao painel</h1>
+      <p className="portal-lead" style={{ marginInline: "auto" }}>
+        Esta conta não faz parte da equipe.
+      </p>
       <form action={signOut}>
-        <button
-          type="submit"
-          className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium dark:border-zinc-700"
-        >
+        <button type="submit" className="portal-btn portal-btn-ghost">
           Sair
         </button>
       </form>

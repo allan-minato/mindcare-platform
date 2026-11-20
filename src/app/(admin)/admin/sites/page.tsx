@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import {
+  PortalCard,
+  PortalPage,
+  PortalPageHeader,
+  StatusChip,
+} from "@/components/portal";
 import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
 import { listSites } from "@/lib/sites/queries";
 import { templateLabel } from "@/lib/templates/registry";
@@ -17,65 +23,79 @@ export default async function SitesPage() {
   const sites = await listSites();
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="grid gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Sites</h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Rascunhos ligados a um profissional e a um template.
-          </p>
-        </div>
-        {canWrite ? (
-          <Link
-            href="/admin/sites/new"
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-          >
-            Novo site
-          </Link>
-        ) : null}
-      </div>
+    <PortalPage>
+      <PortalPageHeader
+        kicker="Sites"
+        title="Sites"
+        lead="Rascunhos ligados a um profissional e a um template."
+        actions={
+          canWrite ? (
+            <Link href="/admin/sites/new" className="portal-btn portal-btn-primary">
+              Novo site
+            </Link>
+          ) : null
+        }
+      />
 
       {sites.length === 0 ? (
-        <p className="text-sm text-zinc-500">Nenhum site criado.</p>
+        <PortalCard quiet>
+          <div className="portal-empty">
+            <p className="portal-section-title" style={{ fontSize: "1.2rem" }}>
+              Nenhum site criado
+            </p>
+            <p>Crie o primeiro site para um profissional ativo.</p>
+            {canWrite ? (
+              <div style={{ marginTop: "0.75rem" }}>
+                <Link
+                  href="/admin/sites/new"
+                  className="portal-btn portal-btn-primary"
+                >
+                  Novo site
+                </Link>
+              </div>
+            ) : null}
+          </div>
+        </PortalCard>
       ) : (
-        <ul className="divide-y divide-zinc-200 border-t border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
-          {sites.map((site) => (
-            <li
-              key={site.id}
-              className="flex items-center justify-between gap-4 py-4"
-            >
-              <div className="grid gap-1">
-                <div className="flex flex-wrap items-center gap-2">
+        <div className="portal-site-grid">
+          {sites.map((site) => {
+            const live = Boolean(site.live_publication_id);
+            return (
+              <PortalCard key={site.id} className="portal-site-card">
+                <div className="portal-site-card-top">
+                  <div>
+                    <h2 className="portal-site-name">{site.name}</h2>
+                    <p className="portal-site-meta">
+                      {site.slug}
+                      {" · "}
+                      {templateLabel(site.template_key)}
+                      {" · "}
+                      {site.professional_name}
+                    </p>
+                  </div>
+                  <StatusChip live={live} />
+                </div>
+                <div className="portal-site-actions">
                   <Link
                     href={`/admin/sites/${site.id}`}
-                    className="font-medium underline-offset-4 hover:underline"
+                    className="portal-btn portal-btn-primary"
                   >
-                    {site.name}
+                    Abrir
                   </Link>
-                  {site.live_publication_id ? (
-                    <span className="text-xs font-medium tracking-wide text-emerald-700 dark:text-emerald-400">
-                      No ar
-                    </span>
-                  ) : null}
+                  <Link
+                    href={`/preview/${site.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="portal-btn portal-btn-ghost"
+                  >
+                    Prévia
+                  </Link>
                 </div>
-                <p className="text-sm text-zinc-500">
-                  {site.slug}
-                  {" · "}
-                  {templateLabel(site.template_key)}
-                  {" · "}
-                  {site.professional_name}
-                </p>
-              </div>
-              <Link
-                href={`/admin/sites/${site.id}`}
-                className="text-sm text-zinc-600 underline-offset-4 hover:underline dark:text-zinc-400"
-              >
-                Ver
-              </Link>
-            </li>
-          ))}
-        </ul>
+              </PortalCard>
+            );
+          })}
+        </div>
       )}
-    </main>
+    </PortalPage>
   );
 }

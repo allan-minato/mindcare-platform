@@ -25,13 +25,15 @@ export function TeamPanel({ members, currentUserId }: TeamPanelProps) {
   );
 
   return (
-    <div className="grid gap-8">
-      <section className="grid gap-3">
-        <h2 className="text-lg font-medium">Membros</h2>
+    <div className="portal-form">
+      <section className="portal-section">
+        <div className="portal-section-head">
+          <h2 className="portal-section-title">Membros</h2>
+        </div>
         {members.length === 0 ? (
-          <p className="text-sm text-zinc-500">Nenhum membro cadastrado.</p>
+          <p className="portal-hint">Nenhum membro cadastrado.</p>
         ) : (
-          <ul className="grid gap-4">
+          <div className="portal-list">
             {members.map((member) => (
               <MemberRow
                 key={member.id}
@@ -39,56 +41,50 @@ export function TeamPanel({ members, currentUserId }: TeamPanelProps) {
                 isSelf={member.id === currentUserId}
               />
             ))}
-          </ul>
+          </div>
         )}
       </section>
 
-      <section className="grid gap-3">
-        <h2 className="text-lg font-medium">Convidar</h2>
-        <form action={inviteAction} className="grid gap-3">
-          <div className="grid gap-1">
-            <label htmlFor="full_name" className="text-sm font-medium">
-              Nome
-            </label>
+      <section className="portal-section">
+        <div className="portal-section-head">
+          <h2 className="portal-section-title">Convidar</h2>
+        </div>
+        <form action={inviteAction} className="portal-field-grid">
+          <div className="portal-label">
+            <label htmlFor="full_name">Nome</label>
             <input
               id="full_name"
               name="full_name"
               type="text"
               required
-              className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+              className="portal-input"
             />
             {inviteState.fieldErrors?.full_name?.[0] ? (
-              <p className="text-sm text-red-700 dark:text-red-400">
+              <p className="portal-error">
                 {inviteState.fieldErrors.full_name[0]}
               </p>
             ) : null}
           </div>
-          <div className="grid gap-1">
-            <label htmlFor="email" className="text-sm font-medium">
-              E-mail
-            </label>
+          <div className="portal-label">
+            <label htmlFor="email">E-mail</label>
             <input
               id="email"
               name="email"
               type="email"
               required
-              className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+              className="portal-input"
             />
             {inviteState.fieldErrors?.email?.[0] ? (
-              <p className="text-sm text-red-700 dark:text-red-400">
-                {inviteState.fieldErrors.email[0]}
-              </p>
+              <p className="portal-error">{inviteState.fieldErrors.email[0]}</p>
             ) : null}
           </div>
-          <div className="grid gap-1">
-            <label htmlFor="role" className="text-sm font-medium">
-              Papel
-            </label>
+          <div className="portal-label">
+            <label htmlFor="role">Papel</label>
             <select
               id="role"
               name="role"
               defaultValue="editor"
-              className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+              className="portal-input"
             >
               {teamRoles.map((role) => (
                 <option key={role} value={role}>
@@ -97,22 +93,20 @@ export function TeamPanel({ members, currentUserId }: TeamPanelProps) {
               ))}
             </select>
           </div>
-          <button
-            type="submit"
-            disabled={invitePending}
-            className="w-fit rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
-          >
-            Enviar convite
-          </button>
+          <div className="portal-field-span">
+            <button
+              type="submit"
+              disabled={invitePending}
+              className="portal-btn portal-btn-primary"
+            >
+              Enviar convite
+            </button>
+          </div>
           {inviteState.error ? (
-            <p className="text-sm text-red-700 dark:text-red-400">
-              {inviteState.error}
-            </p>
+            <p className="portal-error portal-field-span">{inviteState.error}</p>
           ) : null}
           {inviteState.success ? (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              {inviteState.success}
-            </p>
+            <p className="portal-hint portal-field-span">{inviteState.success}</p>
           ) : null}
         </form>
       </section>
@@ -128,15 +122,17 @@ function MemberRow({
   isSelf: boolean;
 }) {
   return (
-    <li className="grid gap-3 border-b border-zinc-200 pb-4 last:border-b-0 last:pb-0 dark:border-zinc-800">
+    <div className="portal-list-item grid gap-3">
       <div className="grid gap-1">
         <p className="font-medium">
           {member.full_name}
           {isSelf ? (
-            <span className="ml-2 text-xs font-normal text-zinc-500">você</span>
+            <span className="ml-2 text-xs font-normal text-[var(--portal-muted)]">
+              você
+            </span>
           ) : null}
         </p>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="portal-hint" style={{ margin: 0 }}>
           {member.email}
           {" · "}
           {adminRoleLabel(member.role)}
@@ -160,7 +156,7 @@ function MemberRow({
           disabled={isSelf}
         />
       </div>
-    </li>
+    </div>
   );
 }
 
@@ -184,14 +180,12 @@ function RoleButton({
       <button
         type="submit"
         disabled={pending || active || disabled}
-        className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm disabled:opacity-60 dark:border-zinc-700"
+        className={`portal-btn ${active ? "portal-btn-primary" : "portal-btn-ghost"}`}
       >
         {adminRoleLabel(role)}
       </button>
       {state.error ? (
-        <span className="ml-2 text-sm text-red-700 dark:text-red-400">
-          {state.error}
-        </span>
+        <span className="ml-2 portal-error">{state.error}</span>
       ) : null}
     </form>
   );
@@ -215,14 +209,12 @@ function ActiveButton({
       <button
         type="submit"
         disabled={pending || disabled}
-        className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm disabled:opacity-60 dark:border-zinc-700"
+        className="portal-btn portal-btn-ghost"
       >
         {isActive ? "Desativar" : "Reativar"}
       </button>
       {state.error ? (
-        <span className="ml-2 text-sm text-red-700 dark:text-red-400">
-          {state.error}
-        </span>
+        <span className="ml-2 portal-error">{state.error}</span>
       ) : null}
     </form>
   );

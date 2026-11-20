@@ -8,6 +8,7 @@ import {
 } from "@/app/(admin)/admin/professionals/actions";
 import { InviteAccessPanel } from "@/app/(admin)/admin/professionals/invite-access-panel";
 import { ProfessionalForm } from "@/app/(admin)/admin/professionals/professional-form";
+import { PortalPage, PortalPageHeader } from "@/components/portal";
 import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
 import {
   getProfessional,
@@ -43,56 +44,45 @@ export default async function ProfessionalDetailPage({ params }: PageProps) {
   const reactivate = setProfessionalStatus.bind(null, professional.id, "active");
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="grid gap-2">
-          <Link
-            href="/admin/professionals"
-            className="text-sm text-zinc-500 underline-offset-4 hover:underline"
-          >
-            Voltar
-          </Link>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {professional.full_name}
-          </h1>
-          {!canWrite ? (
-            <p className="text-sm text-zinc-500">
-              Sua conta pode ver o cadastro, mas não alterar.
-            </p>
-          ) : null}
-        </div>
-        {canWrite ? (
-          <div className="flex flex-wrap gap-2">
-            {professional.status !== "archived" ? (
-              <Link
-                href={`/admin/sites/new?professionalId=${professional.id}`}
-                className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium dark:border-zinc-700"
-              >
-                Criar site
-              </Link>
-            ) : null}
-            {professional.status === "archived" ? (
-              <form action={reactivate}>
-                <button
-                  type="submit"
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium dark:border-zinc-700"
+    <PortalPage>
+      <PortalPageHeader
+        backHref="/admin/professionals"
+        backLabel="Voltar"
+        kicker="Cadastro"
+        title={professional.full_name}
+        lead={
+          canWrite
+            ? undefined
+            : "Sua conta pode ver o cadastro, mas não alterar."
+        }
+        actions={
+          canWrite ? (
+            <>
+              {professional.status !== "archived" ? (
+                <Link
+                  href={`/admin/sites/new?professionalId=${professional.id}`}
+                  className="portal-btn portal-btn-ghost"
                 >
-                  Reativar
-                </button>
-              </form>
-            ) : (
-              <form action={archive}>
-                <button
-                  type="submit"
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium dark:border-zinc-700"
-                >
-                  Arquivar
-                </button>
-              </form>
-            )}
-          </div>
-        ) : null}
-      </div>
+                  Criar site
+                </Link>
+              ) : null}
+              {professional.status === "archived" ? (
+                <form action={reactivate}>
+                  <button type="submit" className="portal-btn portal-btn-ghost">
+                    Reativar
+                  </button>
+                </form>
+              ) : (
+                <form action={archive}>
+                  <button type="submit" className="portal-btn portal-btn-ghost">
+                    Arquivar
+                  </button>
+                </form>
+              )}
+            </>
+          ) : null
+        }
+      />
 
       {canWrite ? (
         <InviteAccessPanel
@@ -106,7 +96,8 @@ export default async function ProfessionalDetailPage({ params }: PageProps) {
         professional={professional}
         readOnly={!canWrite}
         action={action}
+        studio
       />
-    </main>
+    </PortalPage>
   );
 }

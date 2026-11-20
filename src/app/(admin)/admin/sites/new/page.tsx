@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { createSite } from "@/app/(admin)/admin/sites/actions";
 import { SiteForm } from "@/app/(admin)/admin/sites/site-form";
+import { PortalPageHeader } from "@/components/portal";
 import { requireAdminRole } from "@/lib/auth/admin";
 import {
   listActiveTemplates,
@@ -35,19 +35,13 @@ export default async function NewSitePage({ searchParams }: PageProps) {
         templates={templates}
         initialProfessionalId={params.professionalId}
         header={
-          <div className="grid gap-2">
-            <Link
-              href="/admin/sites"
-              className="text-sm text-zinc-500 underline-offset-4 hover:underline"
-            >
-              Voltar
-            </Link>
-            <h1 className="text-3xl font-semibold tracking-tight">Novo site</h1>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              Escolha o profissional e o template. A prévia mostra o visual
-              antes de criar; as seções padrão vêm na sequência.
-            </p>
-          </div>
+          <PortalPageHeader
+            backHref="/admin/sites"
+            backLabel="Voltar"
+            kicker="Sites"
+            title="Novo site"
+            lead="Escolha o profissional e o template. A prévia mostra o visual antes de criar; as seções padrão vêm na sequência."
+          />
         }
       />
     </main>

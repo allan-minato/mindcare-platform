@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import {
+  PortalCard,
+  PortalPage,
+  PortalPageHeader,
+  StatusChip,
+} from "@/components/portal";
 import { requireProfessionalProfile } from "@/lib/auth/professional";
 import { listMySites } from "@/lib/sites/queries";
 import { templateLabel } from "@/lib/templates/registry";
@@ -14,68 +20,147 @@ export const metadata: Metadata = {
 export default async function PortalHomePage() {
   const profile = await requireProfessionalProfile();
   const sites = await listMySites(profile.professionalId);
+  const firstName = profile.fullName.split(/\s+/)[0] || profile.fullName;
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
-      <div className="grid gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Olá, {profile.fullName}</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
-          Edite seu perfil e o conteúdo dos seus sites. Publicação e domínio
-          ficam com a equipe MindCare.
-        </p>
+    <PortalPage>
+      <PortalPageHeader
+        kicker="Portal"
+        title={
+          <>
+            Olá,{" "}
+            <em style={{ fontStyle: "italic", color: "var(--portal-gold)" }}>
+              {firstName}
+            </em>
+          </>
+        }
+        lead="Aqui você cuida de duas coisas: seus dados de profissional e o conteúdo do seu site. Publicação e domínio ficam com a equipe MindCare."
+      />
+
+      <div className="portal-hub-grid">
+        <PortalCard className="portal-hub-card">
+          <div>
+            <p className="portal-hub-eyebrow">Seu cadastro</p>
+            <h2 className="portal-hub-title">Meu perfil</h2>
+            <p className="portal-hub-lead">
+              Nome, CRP, foto, WhatsApp, bio e redes que aparecem no site.
+            </p>
+          </div>
+          <ul className="portal-hub-points">
+            <li>Atualize dados de contato e apresentação</li>
+            <li>Mudanças no site no ar só depois da equipe republicar</li>
+          </ul>
+          <div className="portal-hub-actions">
+            <Link href="/app/profile" className="portal-btn portal-btn-primary">
+              Editar meu perfil
+            </Link>
+          </div>
+        </PortalCard>
+
+        <PortalCard className="portal-hub-card">
+          <div className="portal-hub-card-top">
+            <div>
+              <p className="portal-hub-eyebrow">Sua página pública</p>
+              <h2 className="portal-hub-title">Meus sites</h2>
+              <p className="portal-hub-lead">
+                Textos, seções e blog. A prévia mostra como o visitante vai ver.
+              </p>
+            </div>
+            <span className="portal-hub-count">
+              <strong>{sites.length}</strong>
+              {sites.length === 1 ? "site" : "sites"}
+            </span>
+          </div>
+          <ul className="portal-hub-points">
+            <li>Editar home com prévia ao vivo</li>
+            <li>Escrever e organizar posts do blog</li>
+          </ul>
+        </PortalCard>
       </div>
 
       <section className="grid gap-3">
-        <div className="flex items-end justify-between gap-4">
-          <h2 className="text-lg font-medium">Seus sites</h2>
-          <Link
-            href="/app/profile"
-            className="text-sm underline-offset-4 hover:underline"
-          >
-            Editar perfil
-          </Link>
+        <div className="flex items-end justify-between gap-3">
+          <h2 className="portal-section-title" style={{ fontSize: "1.25rem" }}>
+            Sites vinculados
+          </h2>
         </div>
+
         {sites.length === 0 ? (
-          <p className="text-sm text-zinc-500">
-            Nenhum site vinculado ainda. A equipe cria o site para você.
-          </p>
-        ) : (
-          <ul className="divide-y divide-zinc-200 border-t border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
-            {sites.map((site) => (
-              <li
-                key={site.id}
-                className="flex flex-wrap items-center justify-between gap-4 py-4"
-              >
-                <div className="grid gap-1">
-                  <Link
-                    href={`/app/sites/${site.id}`}
-                    className="font-medium underline-offset-4 hover:underline"
-                  >
-                    {site.name}
-                  </Link>
-                  <p className="text-sm text-zinc-500">
-                    {site.slug}
-                    {" · "}
-                    {templateLabel(site.template_key)}
-                    {" · "}
-                    {site.live_publication_id
-                      ? `No ar · v${site.published_version ?? "—"}`
-                      : "Rascunho"}
-                  </p>
-                </div>
+          <PortalCard quiet>
+            <div className="portal-empty">
+              <p className="portal-section-title" style={{ fontSize: "1.2rem" }}>
+                Ainda sem site
+              </p>
+              <p>
+                A equipe MindCare cria e vincula o site para você. Enquanto
+                isso, complete seu perfil.
+              </p>
+              <div style={{ marginTop: "0.75rem" }}>
                 <Link
-                  href={`/preview/${site.id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700"
+                  href="/app/profile"
+                  className="portal-btn portal-btn-primary"
                 >
-                  Prévia
+                  Completar perfil
                 </Link>
-              </li>
-            ))}
-          </ul>
+              </div>
+            </div>
+          </PortalCard>
+        ) : (
+          <div className="portal-site-grid">
+            {sites.map((site) => {
+              const live = Boolean(site.live_publication_id);
+              return (
+                <PortalCard key={site.id} className="portal-site-card">
+                  <div className="portal-site-card-top">
+                    <div>
+                      <p className="portal-hub-eyebrow" style={{ marginBottom: "0.35rem" }}>
+                        Site · {templateLabel(site.template_key)}
+                      </p>
+                      <h3 className="portal-site-name">{site.name}</h3>
+                      <p className="portal-site-meta">
+                        Endereço interno: {site.slug}
+                        {live
+                          ? ` · versão publicada v${site.published_version ?? "—"}`
+                          : " · ainda não publicado"}
+                      </p>
+                    </div>
+                    <StatusChip
+                      live={live}
+                      label={
+                        live
+                          ? `No ar · v${site.published_version ?? "—"}`
+                          : "Rascunho"
+                      }
+                    />
+                  </div>
+                  <div className="portal-site-actions">
+                    <Link
+                      href={`/app/sites/${site.id}`}
+                      className="portal-btn portal-btn-primary"
+                    >
+                      Editar conteúdo
+                    </Link>
+                    <Link
+                      href={`/preview/${site.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="portal-btn portal-btn-ghost"
+                    >
+                      Ver prévia
+                    </Link>
+                    <Link
+                      href={`/app/sites/${site.id}/blog`}
+                      className="portal-btn portal-btn-ghost"
+                    >
+                      Gerenciar blog
+                    </Link>
+                  </div>
+                </PortalCard>
+              );
+            })}
+          </div>
         )}
       </section>
-    </main>
+    </PortalPage>
   );
 }

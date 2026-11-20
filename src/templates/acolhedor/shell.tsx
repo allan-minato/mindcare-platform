@@ -277,9 +277,8 @@ const acolhedorCss = `
   z-index: 50;
   padding-top: calc(1rem + var(--site-safe-top, env(safe-area-inset-top, 0px)));
   padding-bottom: 1rem;
-  background: rgba(250, 250, 250, 0.85);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  /* Fundo sólido: backdrop-filter + CSS zoom na prévia mobile gera véu branco. */
+  background: var(--ac-paper);
   box-shadow: 0 1px 0 var(--ac-line);
 }
 .acolhedor-header-inner {
