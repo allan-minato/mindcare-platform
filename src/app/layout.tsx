@@ -13,8 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MindCare Platform",
-  description: "CMS para sites de psicólogos e psiquiatras.",
+  title: {
+    default: "MindCare · Sites para profissionais de saúde mental",
+    template: "%s · MindCare",
+  },
+  description:
+    "Plataforma para psicólogos e psiquiatras criarem e editarem o site profissional com prévia ao vivo.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

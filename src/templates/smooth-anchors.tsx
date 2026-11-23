@@ -20,14 +20,19 @@ export function SmoothAnchors() {
       }
 
       const anchor = (event.target as Element | null)?.closest(
-        'a[href^="#"]',
+        "a[href]",
       ) as HTMLAnchorElement | null;
-      if (!anchor) {
+      if (!anchor || anchor.target === "_blank") {
         return;
       }
 
-      const hash = anchor.getAttribute("href");
-      if (!hash || hash === "#") {
+      const href = anchor.getAttribute("href");
+      if (!href || href === "#") {
+        return;
+      }
+
+      const hash = resolveSamePageHash(href);
+      if (!hash) {
         return;
       }
 
@@ -42,15 +47,17 @@ export function SmoothAnchors() {
         ) ?? document;
       const target = root.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
       if (!target) {
+        // Fora da home (ex.: /blog) — deixa navegar para `/#seção`.
         return;
       }
 
       event.preventDefault();
 
       const scrollParent = getScrollParent(target);
-      const header = root instanceof Element
-        ? root.querySelector<HTMLElement>(HEADER_SELECTORS)
-        : document.querySelector<HTMLElement>(HEADER_SELECTORS);
+      const header =
+        root instanceof Element
+          ? root.querySelector<HTMLElement>(HEADER_SELECTORS)
+          : document.querySelector<HTMLElement>(HEADER_SELECTORS);
       const offset = (header?.offsetHeight ?? 72) + 12;
       const nextTop = absoluteTopWithin(scrollParent, target) - offset;
 
@@ -67,6 +74,30 @@ export function SmoothAnchors() {
   }, []);
 
   return null;
+}
+
+/** `#id` ou `/#id` (e variantes com basePath) na mesma página. */
+function resolveSamePageHash(href: string): string | null {
+  if (href.startsWith("#")) {
+    return href;
+  }
+
+  try {
+    const url = new URL(href, window.location.href);
+    if (!url.hash || url.hash === "#") {
+      return null;
+    }
+    if (url.origin !== window.location.origin) {
+      return null;
+    }
+    // Mesmo path → âncora local. Path diferente (ex. /blog → /#sobre) → navega.
+    if (url.pathname !== window.location.pathname) {
+      return null;
+    }
+    return url.hash;
+  } catch {
+    return null;
+  }
 }
 
 function getScrollParent(node: Element): HTMLElement | Window {

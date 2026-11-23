@@ -16,6 +16,7 @@ import {
   whatsappHref,
   type TemplateShellProps,
 } from "@/templates/shared";
+import { CurrentYear } from "@/templates/current-year";
 import { SmoothAnchors } from "@/templates/smooth-anchors";
 
 const display = Cormorant_Garamond({
@@ -52,7 +53,6 @@ export function AcolhedorShell({
   const igHref = instagramHref(professional.social_links);
   const igLabel = instagramLabel(professional.social_links);
   const placeLine = attendanceSummary(professional);
-  const year = new Date().getFullYear();
   const copyrightBits = [name, specialty || "Psicólogo", council]
     .filter(Boolean)
     .join(" · ");
@@ -142,7 +142,7 @@ export function AcolhedorShell({
 
           <div className="acolhedor-footer-bottom">
             <p>
-              © {year} {copyrightBits}.
+              © <CurrentYear /> {copyrightBits}.
             </p>
             <div className="acolhedor-footer-social">
               {whatsapp ? (

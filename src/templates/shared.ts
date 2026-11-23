@@ -128,7 +128,8 @@ export function siteNavItems(
     if (!section) {
       return [];
     }
-    return [{ href: `#${section.key}`, label }];
+    // `/#seção` funciona na home e a partir de /blog (hash puro quebra fora da home).
+    return [{ href: siteHref(`/#${section.key}`, basePath), label }];
   });
 
   if (document.blog.enabled && document.blog.posts.length > 0) {
