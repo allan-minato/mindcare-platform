@@ -72,6 +72,15 @@ export function ScrollReveal({
     }
 
     const scrollRoot = closestScrollRoot(node);
+    let frame = 0;
+
+    const syncFromGeometry = () => {
+      if (isElementInView(node, scrollRoot)) {
+        setVisible(true);
+      } else {
+        setVisible(false);
+      }
+    };
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -79,15 +88,31 @@ export function ScrollReveal({
       },
       {
         root: scrollRoot,
-        threshold: 0.12,
-        rootMargin: scrollRoot
-          ? "0px 0px -8% 0px"
-          : "0px 0px -10% 0px",
+        threshold: [0, 0.08, 0.12, 0.2],
+        rootMargin: scrollRoot ? "0px 0px -6% 0px" : "0px 0px -8% 0px",
       },
     );
 
     observer.observe(node);
-    return () => observer.disconnect();
+
+    // Layout da página cheia (html/body) pode atrasar o 1º callback do IO.
+    frame = window.requestAnimationFrame(() => {
+      syncFromGeometry();
+    });
+
+    const onScrollOrResize = () => syncFromGeometry();
+    const scrollTarget: Element | Window = scrollRoot ?? window;
+    scrollTarget.addEventListener("scroll", onScrollOrResize, {
+      passive: true,
+    });
+    window.addEventListener("resize", onScrollOrResize, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(frame);
+      scrollTarget.removeEventListener("scroll", onScrollOrResize);
+      window.removeEventListener("resize", onScrollOrResize);
+    };
   }, [immediate]);
 
   const style =
@@ -106,17 +131,59 @@ export function ScrollReveal({
   );
 }
 
+/**
+ * Scroller aninhado (prévia ao vivo) ou null = viewport do documento.
+ * Nunca usa body/html — o IO com root=body quebra a revelação na página cheia.
+ */
 function closestScrollRoot(node: Element): Element | null {
+  const marked = node.closest("[data-site-scroll-root], .live-preview-phone");
+  if (marked) {
+    return marked;
+  }
+
   let current = node.parentElement;
-  while (current) {
+  while (
+    current &&
+    current !== document.body &&
+    current !== document.documentElement
+  ) {
     const style = getComputedStyle(current);
-    const scrollable =
-      /(auto|scroll|overlay)/.test(style.overflowY) ||
-      /(auto|scroll|overlay)/.test(style.overflow);
-    if (scrollable && current.scrollHeight > current.clientHeight + 1) {
+    const overflowY = style.overflowY;
+    const scrollableY =
+      overflowY === "auto" ||
+      overflowY === "scroll" ||
+      overflowY === "overlay";
+    if (scrollableY && current.scrollHeight > current.clientHeight + 1) {
       return current;
     }
     current = current.parentElement;
   }
+
   return null;
+}
+
+function isElementInView(node: Element, scrollRoot: Element | null): boolean {
+  const rect = node.getBoundingClientRect();
+  if (rect.width === 0 && rect.height === 0) {
+    return false;
+  }
+
+  if (!scrollRoot) {
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    return (
+      rect.bottom > vh * 0.05 &&
+      rect.top < vh * 0.95 &&
+      rect.right > 0 &&
+      rect.left < vw
+    );
+  }
+
+  const rootRect = scrollRoot.getBoundingClientRect();
+  return (
+    rect.bottom > rootRect.top + rootRect.height * 0.05 &&
+    rect.top < rootRect.bottom - rootRect.height * 0.05 &&
+    rect.right > rootRect.left &&
+    rect.left < rootRect.right
+  );
 }

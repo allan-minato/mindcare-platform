@@ -276,6 +276,7 @@ export function LiveSitePreview({
                     <style>{phonePreviewCss}</style>
                     <div
                       ref={scrollRef}
+                      data-site-scroll-root
                       className="live-preview-phone isolate z-0 h-full w-full overflow-x-hidden overflow-y-auto overscroll-contain bg-white [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                       style={
                         {
@@ -319,6 +320,7 @@ export function LiveSitePreview({
             >
               <div
                 ref={scrollRef}
+                data-site-scroll-root
                 className="overflow-x-hidden overflow-y-auto bg-white [scrollbar-width:thin]"
                 style={
                   {

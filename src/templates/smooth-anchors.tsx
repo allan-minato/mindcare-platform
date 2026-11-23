@@ -11,6 +11,42 @@ const HEADER_SELECTORS = [
 /** Intercepta âncoras internas e rola com animação lenta até a seção. */
 export function SmoothAnchors() {
   useEffect(() => {
+    const scrollToHash = (hash: string, behavior: "smooth" | "auto" = "smooth") => {
+      const id = decodeURIComponent(hash.replace(/^#/, ""));
+      if (!id) {
+        return false;
+      }
+
+      const root =
+        document.querySelector(
+          ".acolhedor-root, .premium-root, .minimalista-root",
+        ) ?? document;
+      const target = root.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
+      if (!target) {
+        return false;
+      }
+
+      const scrollParent = getScrollParent(target);
+      const header =
+        root instanceof Element
+          ? root.querySelector<HTMLElement>(HEADER_SELECTORS)
+          : document.querySelector<HTMLElement>(HEADER_SELECTORS);
+      const offset = (header?.offsetHeight ?? 72) + 12;
+      const nextTop = absoluteTopWithin(scrollParent, target) - offset;
+
+      if (behavior === "auto") {
+        if (scrollParent === window) {
+          window.scrollTo(0, Math.max(0, nextTop));
+        } else {
+          (scrollParent as HTMLElement).scrollTop = Math.max(0, nextTop);
+        }
+        return true;
+      }
+
+      animateScroll(scrollParent, Math.max(0, nextTop), 900);
+      return true;
+    };
+
     const onClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0) {
         return;
@@ -47,29 +83,30 @@ export function SmoothAnchors() {
         ) ?? document;
       const target = root.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
       if (!target) {
-        // Fora da home (ex.: /blog) — deixa navegar para `/#seção`.
+        // Fora da home (ex.: /blog) — deixa navegar para a home com âncora.
         return;
       }
 
       event.preventDefault();
+      scrollToHash(hash, "smooth");
 
-      const scrollParent = getScrollParent(target);
-      const header =
-        root instanceof Element
-          ? root.querySelector<HTMLElement>(HEADER_SELECTORS)
-          : document.querySelector<HTMLElement>(HEADER_SELECTORS);
-      const offset = (header?.offsetHeight ?? 72) + 12;
-      const nextTop = absoluteTopWithin(scrollParent, target) - offset;
-
-      animateScroll(scrollParent, Math.max(0, nextTop), 900);
-
-      const inLivePreview = Boolean(anchor.closest(".live-preview-phone"));
+      const inLivePreview = Boolean(
+        anchor.closest("[data-site-scroll-root], .live-preview-phone"),
+      );
       if (!inLivePreview && history.replaceState) {
         history.replaceState(null, "", hash);
       }
     };
 
     document.addEventListener("click", onClick);
+
+    // Entrada direta com /rota#seção (produção / Ver prévia).
+    if (window.location.hash.length > 1) {
+      requestAnimationFrame(() => {
+        scrollToHash(window.location.hash, "smooth");
+      });
+    }
+
     return () => document.removeEventListener("click", onClick);
   }, []);
 
@@ -101,13 +138,26 @@ function resolveSamePageHash(href: string): string | null {
 }
 
 function getScrollParent(node: Element): HTMLElement | Window {
+  const marked = node.closest(
+    "[data-site-scroll-root], .live-preview-phone",
+  ) as HTMLElement | null;
+  if (marked) {
+    return marked;
+  }
+
   let current = node.parentElement;
-  while (current) {
+  while (
+    current &&
+    current !== document.body &&
+    current !== document.documentElement
+  ) {
     const style = getComputedStyle(current);
-    const scrollable =
-      /(auto|scroll|overlay)/.test(style.overflowY) ||
-      /(auto|scroll|overlay)/.test(style.overflow);
-    if (scrollable && current.scrollHeight > current.clientHeight + 1) {
+    const overflowY = style.overflowY;
+    const scrollableY =
+      overflowY === "auto" ||
+      overflowY === "scroll" ||
+      overflowY === "overlay";
+    if (scrollableY && current.scrollHeight > current.clientHeight + 1) {
       return current;
     }
     current = current.parentElement;
