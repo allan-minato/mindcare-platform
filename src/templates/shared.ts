@@ -357,4 +357,5 @@ export const previewBannerCss = `
 `;
 
 export { professionalDisplayName, whatsappHref };
-export { ScrollReveal, scrollRevealCss } from "@/templates/scroll-reveal";
+export { scrollRevealCss } from "@/templates/scroll-reveal-css";
+export { ScrollReveal } from "@/templates/scroll-reveal";

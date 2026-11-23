@@ -10,13 +10,13 @@ import {
   instagramLabel,
   previewBannerCss,
   professionalDisplayName,
-  scrollRevealCss,
   siteHref,
   siteNavItems,
   whatsappHref,
   type TemplateShellProps,
 } from "@/templates/shared";
 import { CurrentYear } from "@/templates/current-year";
+import { scrollRevealCss } from "@/templates/scroll-reveal-css";
 import { SmoothAnchors } from "@/templates/smooth-anchors";
 
 const display = Cormorant_Garamond({

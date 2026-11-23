@@ -8,35 +8,6 @@ import {
   type ReactNode,
 } from "react";
 
-export const scrollRevealCss = `
-.site-reveal {
-  opacity: 0;
-  transform: translate3d(0, 1.75rem, 0);
-  transition:
-    opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-.site-reveal.is-in {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-}
-.site-reveal:not(.is-in) {
-  /* saída mais rápida para poder revelar de novo na próxima entrada */
-  transition-duration: 0.35s;
-  transition-delay: 0ms !important;
-}
-@media (prefers-reduced-motion: reduce) {
-  .site-reveal,
-  .site-reveal.is-in {
-    opacity: 1;
-    transform: none;
-    transition: none;
-    will-change: auto;
-  }
-}
-`;
-
 type ScrollRevealProps = {
   children: ReactNode;
   className?: string;
@@ -75,11 +46,7 @@ export function ScrollReveal({
     let frame = 0;
 
     const syncFromGeometry = () => {
-      if (isElementInView(node, scrollRoot)) {
-        setVisible(true);
-      } else {
-        setVisible(false);
-      }
+      setVisible(isElementInView(node, scrollRoot));
     };
 
     const observer = new IntersectionObserver(
@@ -95,7 +62,6 @@ export function ScrollReveal({
 
     observer.observe(node);
 
-    // Layout da página cheia (html/body) pode atrasar o 1º callback do IO.
     frame = window.requestAnimationFrame(() => {
       syncFromGeometry();
     });
@@ -131,10 +97,6 @@ export function ScrollReveal({
   );
 }
 
-/**
- * Scroller aninhado (prévia ao vivo) ou null = viewport do documento.
- * Nunca usa body/html — o IO com root=body quebra a revelação na página cheia.
- */
 function closestScrollRoot(node: Element): Element | null {
   const marked = node.closest("[data-site-scroll-root], .live-preview-phone");
   if (marked) {
