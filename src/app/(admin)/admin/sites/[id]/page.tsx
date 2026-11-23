@@ -144,6 +144,8 @@ export default async function SiteDetailPage({ params }: PageProps) {
           siteId={site.id}
           domains={site.domains}
           canManage={canPublish}
+          platformUrl={publicSiteUrl(site.slug)}
+          isLive={isLive}
         />
       </PortalSection>
     </>

@@ -22,6 +22,9 @@ type SiteDomainsPanelProps = {
   siteId: string;
   domains: SiteDomain[];
   canManage: boolean;
+  /** URL do host da plataforma ({slug}.{root}), sempre disponível. */
+  platformUrl: string;
+  isLive: boolean;
 };
 
 const initialState: DomainActionState = {};
@@ -30,12 +33,57 @@ export function SiteDomainsPanel({
   siteId,
   domains,
   canManage,
+  platformUrl,
+  isLive,
 }: SiteDomainsPanelProps) {
   const add = addSiteDomain.bind(null, siteId);
   const [addState, addAction, addPending] = useActionState(add, initialState);
 
+  const primaryVerified = domains.find(
+    (domain) =>
+      domain.is_primary && domain.verification_status === "verified",
+  );
+  const anyVerified = domains.find(
+    (domain) => domain.verification_status === "verified",
+  );
+  const customLiveUrl = primaryVerified ?? anyVerified;
+  const currentPublicUrl = customLiveUrl
+    ? `https://${customLiveUrl.domain}/`
+    : platformUrl;
+
   return (
     <div className="grid gap-4">
+      <div className="rounded-lg border border-[#e4ddd2] bg-[#fffcf8] px-3 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[#6b645c]">
+          URL atual do site
+        </p>
+        {isLive ? (
+          <>
+            <a
+              href={currentPublicUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 block break-all text-sm font-medium text-[#141210] underline-offset-4 hover:underline"
+            >
+              {currentPublicUrl}
+            </a>
+            <p className="mt-1 text-xs text-[#6b645c]">
+              {customLiveUrl
+                ? "Domínio personalizado verificado (principal quando houver)."
+                : "Host da plataforma pelo slug — ainda sem domínio personalizado verificado."}
+            </p>
+          </>
+        ) : (
+          <p className="mt-1 text-sm text-[#6b645c]">
+            Site ainda não está no ar. Depois de publicar, a URL pública será{" "}
+            <span className="break-all font-medium text-[#141210]">
+              {platformUrl}
+            </span>
+            .
+          </p>
+        )}
+      </div>
+
       {domains.length === 0 ? (
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Nenhum domínio personalizado cadastrado.
