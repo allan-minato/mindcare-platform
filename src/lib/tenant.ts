@@ -29,6 +29,54 @@ export type PublishedSite = {
   slug: string;
 };
 
+function parsePublishedPayload(
+  data: unknown,
+  fallbackSlug: string,
+): PublishedSite | null {
+  const payload = publishedPayloadSchema.safeParse(data);
+  if (!payload.success) {
+    return null;
+  }
+
+  const document = parseSiteDocument(payload.data.document);
+  if (!document) {
+    return null;
+  }
+
+  const resolvedSlug = fallbackSlug || document.site.slug;
+  cacheTag(`site:${resolvedSlug}`);
+
+  return {
+    version: payload.data.version,
+    published_at: payload.data.published_at,
+    primary_domain: payload.data.primary_domain ?? null,
+    document,
+    slug: resolvedSlug,
+  };
+}
+
+export async function getPublishedBySlug(
+  slug: string,
+): Promise<PublishedSite | null> {
+  "use cache";
+  const normalized = slug.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+
+  cacheTag(`site:${normalized}`);
+  const supabase = createAnonClient();
+  const { data, error } = await supabase.rpc("get_published_site_by_slug", {
+    p_slug: normalized,
+  });
+
+  if (error || data == null) {
+    return null;
+  }
+
+  return parsePublishedPayload(data, normalized);
+}
+
 export async function getPublishedByHost(
   host: string,
 ): Promise<PublishedSite | null> {
@@ -59,26 +107,7 @@ export async function getPublishedByHost(
     return null;
   }
 
-  const payload = publishedPayloadSchema.safeParse(data);
-  if (!payload.success) {
-    return null;
-  }
-
-  const document = parseSiteDocument(payload.data.document);
-  if (!document) {
-    return null;
-  }
-
-  const resolvedSlug = slug ?? document.site.slug;
-  cacheTag(`site:${resolvedSlug}`);
-
-  return {
-    version: payload.data.version,
-    published_at: payload.data.published_at,
-    primary_domain: payload.data.primary_domain ?? null,
-    document,
-    slug: resolvedSlug,
-  };
+  return parsePublishedPayload(data, slug ?? "");
 }
 
 export function seoFromDocument(document: SiteDocument): {
@@ -108,6 +137,9 @@ export {
   extractSlugFromHost,
   isPlatformHost,
   normalizeHost,
+  publicSiteBasePath,
   publicSiteOrigin,
+  publicSiteUrl,
   resolvePlatformRoot,
+  usesPathBasedPublicSites,
 } from "@/lib/sites/host";

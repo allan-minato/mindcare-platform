@@ -57,9 +57,25 @@ export function publicSiteOrigin(host: string): string {
   return `${protocol}://${host.trim().toLowerCase()}`;
 }
 
+/**
+ * Railway `*.up.railway.app` não emite certificado nem DNS para
+ * `{slug}.servico.up.railway.app` — nesses hosts usamos caminho `/s/{slug}`.
+ */
+export function usesPathBasedPublicSites(root = resolvePlatformRoot()): boolean {
+  return root.endsWith(".up.railway.app");
+}
+
+/** Base path interno quando o site público vive em /s/{slug}. */
+export function publicSiteBasePath(slug: string): string {
+  return `/s/${slug}`;
+}
+
 /** URL pública do site no host interno da plataforma. */
 export function publicSiteUrl(slug: string): string {
   const root = resolvePlatformRoot();
+  if (usesPathBasedPublicSites(root)) {
+    return `https://${root}${publicSiteBasePath(slug)}/`;
+  }
   const host = `${slug}.${root}`;
   if (root === "localhost" || root.endsWith(".localhost")) {
     return `http://${host}:3000/`;

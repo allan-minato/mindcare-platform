@@ -12,6 +12,7 @@ export const reservedSlugs = [
   "admin",
   "api",
   "preview",
+  "s",
 ] as const;
 
 export type SiteListItem = {

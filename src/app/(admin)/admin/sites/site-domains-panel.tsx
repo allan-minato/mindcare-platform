@@ -70,7 +70,7 @@ export function SiteDomainsPanel({
             <p className="mt-1 text-xs text-[#6b645c]">
               {customLiveUrl
                 ? "Domínio personalizado verificado (principal quando houver)."
-                : "Host da plataforma pelo slug — ainda sem domínio personalizado verificado."}
+                : "URL da plataforma pelo slug. Em hosts Railway, usamos /s/{slug} (subdomínio aninhado não tem certificado SSL)."}
             </p>
           </>
         ) : (

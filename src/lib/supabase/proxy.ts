@@ -99,6 +99,8 @@ function shouldRewriteToPublicSite(path: string, hostHeader: string): boolean {
     path.startsWith("/app") ||
     path.startsWith("/login") ||
     path.startsWith("/preview") ||
+    path.startsWith("/s/") ||
+    path === "/s" ||
     path.startsWith("/_next") ||
     path.startsWith("/api")
   ) {
