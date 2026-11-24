@@ -9,9 +9,16 @@ const optionalHttpsUrl = z
   .string()
   .trim()
   .default("")
-  .refine((value) => value.length === 0 || /^https:\/\//.test(value), {
-    message: "A URL da imagem precisa começar com https://.",
-  });
+  .refine(
+    (value) =>
+      value.length === 0 ||
+      /^https:\/\//.test(value) ||
+      /^\/media\//.test(value),
+    {
+      message:
+        "A URL da imagem precisa ser https:// ou um caminho /media/….",
+    },
+  );
 
 export const heroContentSchema = z.object({
   headline: z.string().trim().max(200).default(""),

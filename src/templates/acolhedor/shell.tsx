@@ -12,11 +12,16 @@ import {
   professionalDisplayName,
   siteHref,
   siteNavItems,
+  splitPrimaryNavItems,
   whatsappHref,
   type TemplateShellProps,
 } from "@/templates/shared";
 import { CurrentYear } from "@/templates/current-year";
 import { scrollRevealCss } from "@/templates/scroll-reveal-css";
+import {
+  SiteMobileNav,
+  siteMobileNavCss,
+} from "@/templates/site-mobile-nav";
 import { SmoothAnchors } from "@/templates/smooth-anchors";
 
 const display = Cormorant_Garamond({
@@ -48,6 +53,7 @@ export function AcolhedorShell({
     .filter(Boolean)
     .join(" · ");
   const navItems = siteNavItems(document, basePath);
+  const { blog: blogItem } = splitPrimaryNavItems(navItems);
   const footerNav = footerNavItems(document, basePath);
   const brandBlurb = footerBrandBlurb(professional);
   const igHref = instagramHref(professional.social_links);
@@ -61,36 +67,51 @@ export function AcolhedorShell({
     <div
       className={`${display.variable} ${body.variable} acolhedor-root min-h-full`}
     >
-      <style>{`${previewBannerCss}${scrollRevealCss}${acolhedorCss}`}</style>
+      <style>{`${previewBannerCss}${scrollRevealCss}${siteMobileNavCss}${acolhedorCss}`}</style>
       <SmoothAnchors />
       {banner}
-      <header className="acolhedor-header">
-        <div className="acolhedor-wrap acolhedor-header-inner">
-          <a href={siteHref("/", basePath)} className="acolhedor-brand">
-            <span className="acolhedor-brand-name">{name}</span>
-            <span className="acolhedor-brand-role">{brandRole}</span>
-          </a>
-          {navItems.length > 0 ? (
-            <nav className="acolhedor-nav" aria-label="Seções">
-              {navItems.map((item) => (
-                <a key={item.href} href={item.href}>
-                  {item.label}
-                </a>
-              ))}
-            </nav>
-          ) : null}
-          {whatsapp ? (
-            <a
-              href={whatsapp}
-              className="acolhedor-btn acolhedor-header-cta"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Entrar em contato
+      <div className="acolhedor-top">
+        <header className="acolhedor-header">
+          <div className="acolhedor-wrap acolhedor-header-inner">
+            <a href={siteHref("/", basePath)} className="acolhedor-brand">
+              <span className="acolhedor-brand-name">{name}</span>
+              <span className="acolhedor-brand-role acolhedor-brand-role-full">
+                {brandRole}
+              </span>
+              <span className="acolhedor-brand-role acolhedor-brand-role-short">
+                {specialty || "Psicólogo"}
+              </span>
             </a>
-          ) : null}
-        </div>
-      </header>
+            {navItems.length > 0 ? (
+              <nav className="acolhedor-nav" aria-label="Seções">
+                {navItems.map((item) => (
+                  <a key={item.href} href={item.href}>
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+            ) : null}
+            <div className="acolhedor-header-actions">
+              {blogItem ? (
+                <a href={blogItem.href} className="acolhedor-btn acolhedor-header-blog">
+                  Blog
+                </a>
+              ) : null}
+              {whatsapp ? (
+                <a
+                  href={whatsapp}
+                  className="acolhedor-btn acolhedor-header-cta"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Entrar em contato
+                </a>
+              ) : null}
+              <SiteMobileNav items={navItems} />
+            </div>
+          </div>
+        </header>
+      </div>
       <main>{children}</main>
       <footer className="acolhedor-footer">
         <div className="acolhedor-wrap">
@@ -244,6 +265,12 @@ const acolhedorCss = `
   --ac-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ac-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ac-shadow: 0 18px 50px -24px rgba(18, 18, 18, 0.4);
+  --site-nav-bg: var(--ac-paper);
+  --site-nav-ink: var(--ac-ink);
+  --site-nav-muted: var(--ac-muted);
+  --site-nav-line: var(--ac-line);
+  --site-nav-accent: var(--ac-gold-deep);
+  --site-nav-soft: var(--ac-gold-soft);
   --ac-step--1: clamp(0.83rem, 0.78rem + 0.2cqi, 0.95rem);
   --ac-step-0: clamp(1rem, 0.95rem + 0.25cqi, 1.13rem);
   --ac-step-1: clamp(1.2rem, 1.1rem + 0.5cqi, 1.5rem);
@@ -271,10 +298,17 @@ const acolhedorCss = `
   margin-inline: auto;
   padding-inline: clamp(1.25rem, 5cqi, 3rem);
 }
-.acolhedor-header {
+.acolhedor-top {
   position: sticky;
   top: 0;
   z-index: 50;
+  background: var(--ac-paper);
+  overflow: visible;
+}
+.acolhedor-top.has-mobile-nav-open .acolhedor-btn.acolhedor-header-blog {
+  display: none !important;
+}
+.acolhedor-header {
   padding-top: calc(1rem + var(--site-safe-top, env(safe-area-inset-top, 0px)));
   padding-bottom: 1rem;
   /* Fundo sólido: backdrop-filter + CSS zoom na prévia mobile gera véu branco. */
@@ -288,7 +322,14 @@ const acolhedorCss = `
   gap: 0.75rem;
   min-width: 0;
 }
-.acolhedor-header-cta {
+.acolhedor-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+.acolhedor-btn.acolhedor-header-cta {
+  display: none;
   flex-shrink: 0;
 }
 .acolhedor-brand {
@@ -318,6 +359,16 @@ const acolhedorCss = `
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.acolhedor-brand-role-short {
+  display: none;
+}
+.acolhedor-btn.acolhedor-header-blog {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
 }
 .acolhedor-nav {
   display: none;
@@ -522,34 +573,38 @@ const acolhedorCss = `
   font-size: var(--ac-step-4);
   max-width: 14ch;
 }
+.acolhedor-hero-meta {
+  margin: 1.15rem 0 0;
+  color: var(--ac-muted);
+  font-size: var(--ac-step--1);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+.acolhedor-hero-meta-sep {
+  margin: 0 0.45rem;
+  opacity: 0.55;
+}
 .acolhedor-hero-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 2.5rem;
+  align-items: center;
+  gap: 1rem 1.35rem;
+  margin-top: 1.75rem;
 }
-.acolhedor-hero-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2.5rem;
-  margin-top: 3rem;
-  padding-top: 0;
-  border: 0;
-}
-.acolhedor-badge {
-  display: flex;
-  flex-direction: column;
-}
-.acolhedor-badge-label {
-  font-family: var(--font-acolhedor-display), Georgia, serif;
-  font-size: var(--ac-step-2);
-  font-weight: 600;
+.acolhedor-hero-secondary {
   color: var(--ac-ink);
-}
-.acolhedor-badge-detail {
+  text-decoration: none;
   font-size: var(--ac-step--1);
-  color: var(--ac-muted);
-  letter-spacing: 0.04em;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--ac-line);
+  padding-bottom: 0.15rem;
+}
+.acolhedor-hero-secondary:hover {
+  border-color: var(--ac-gold);
+  color: var(--ac-gold-deep);
 }
 .acolhedor-media-frame {
   position: relative;
@@ -892,9 +947,11 @@ const acolhedorCss = `
   border-color: var(--ac-gold);
 }
 @container site (max-width: 767px) {
-  .acolhedor-header-cta { display: none; }
+  .acolhedor-btn.acolhedor-header-cta { display: none; }
   .acolhedor-brand-name { font-size: 1.2rem; }
-  .acolhedor-brand-role {
+  .acolhedor-brand-role-full { display: none; }
+  .acolhedor-brand-role-short {
+    display: block;
     font-size: 0.55rem;
     letter-spacing: 0.12em;
     max-width: 100%;
@@ -903,13 +960,23 @@ const acolhedorCss = `
     padding: 0.85rem 1.25rem;
   }
   .acolhedor-hero {
-    padding-top: 3.25rem;
-    padding-bottom: 3rem;
+    min-height: 0;
+    padding-top: 2.25rem;
+    padding-bottom: 2.5rem;
     align-items: flex-start;
+  }
+  .acolhedor-hero .acolhedor-title {
+    max-width: 16ch;
+  }
+  .acolhedor-hero-actions {
+    margin-top: 1.35rem;
   }
 }
 @container site (min-width: 768px) {
   .acolhedor-nav { display: flex; }
+  .acolhedor-btn.acolhedor-header-blog { display: none; }
+  .acolhedor-btn.acolhedor-header-cta { display: inline-flex; }
+  .site-mobile-nav { display: none; }
   .acolhedor-hero-grid { grid-template-columns: 1.15fr 0.85fr; gap: 4rem; }
   .acolhedor-about-grid { grid-template-columns: 0.9fr 1.1fr; }
   .acolhedor-grid-2 { grid-template-columns: repeat(2, 1fr); }

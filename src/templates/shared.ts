@@ -148,6 +148,18 @@ export function siteNavItems(
   return items;
 }
 
+/** Separa Blog dos demais itens — Blog fica destacado fora do menu mobile. */
+export function splitPrimaryNavItems(items: SiteNavItem[]): {
+  blog: SiteNavItem | null;
+  menuItems: SiteNavItem[];
+} {
+  const blog = items.find((item) => item.label === "Blog") ?? null;
+  return {
+    blog,
+    menuItems: items.filter((item) => item.label !== "Blog"),
+  };
+}
+
 export function formatCouncil(
   professional: SiteDocumentProfessional,
 ): string | null {

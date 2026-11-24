@@ -22,7 +22,11 @@ import {
   type SiteDocument,
   type SiteDocumentSection,
 } from "@/lib/sites/document";
-import { homeSections, sectionHasNavContent } from "@/templates/shared";
+import {
+  formatCouncil,
+  homeSections,
+  sectionHasNavContent,
+} from "@/templates/shared";
 
 type SectionProps = {
   section: SiteDocumentSection;
@@ -68,6 +72,7 @@ function HeroSection({ section, document }: SectionProps) {
   const content = heroContentSchema.parse(section.content ?? {});
   const name = professionalDisplayName(document.professional);
   const whatsapp = whatsappHref(document.professional.whatsapp);
+  const council = formatCouncil(document.professional);
   const headline = content.headline.trim() || name;
   const support =
     content.support.trim() ||
@@ -76,6 +81,14 @@ function HeroSection({ section, document }: SectionProps) {
   const servicesSection = homeSections(document).find(
     (item) => item.module === "services" && sectionHasNavContent(item),
   );
+  // Evita repetir CRP já presente no header.
+  const badges = content.badges.filter((badge) => {
+    const normalized = badge.trim().toLowerCase();
+    if (!normalized) return false;
+    if (/^crp\b/i.test(normalized)) return false;
+    if (council && normalized.includes(council.toLowerCase())) return false;
+    return true;
+  });
 
   return (
     <section id={section.key} className="acolhedor-hero">
@@ -84,6 +97,20 @@ function HeroSection({ section, document }: SectionProps) {
           <p className="acolhedor-kicker">Atendimento clínico</p>
           <h1 className="acolhedor-title">{headline}</h1>
           <p className="acolhedor-lead">{support}</p>
+          {badges.length > 0 ? (
+            <p className="acolhedor-hero-meta">
+              {badges.map((badge, index) => (
+                <span key={badge}>
+                  {index > 0 ? (
+                    <span className="acolhedor-hero-meta-sep" aria-hidden="true">
+                      ·
+                    </span>
+                  ) : null}
+                  {badge}
+                </span>
+              ))}
+            </p>
+          ) : null}
           <div className="acolhedor-hero-actions">
             {whatsapp ? (
               <a
@@ -98,30 +125,16 @@ function HeroSection({ section, document }: SectionProps) {
             {servicesSection ? (
               <a
                 href={`#${servicesSection.key}`}
-                className={`acolhedor-btn${whatsapp ? " acolhedor-btn-ghost" : ""}`}
+                className={
+                  whatsapp
+                    ? "acolhedor-hero-secondary"
+                    : "acolhedor-btn"
+                }
               >
                 Conhecer serviços
               </a>
             ) : null}
           </div>
-          {content.badges.length > 0 ? (
-            <div className="acolhedor-hero-badges">
-              {content.badges.map((badge) => {
-                const [label, ...rest] = badge.split(/[:·\-–—]/);
-                const detail = rest.join(" ").trim();
-                return (
-                  <div key={badge} className="acolhedor-badge">
-                    <span className="acolhedor-badge-label">
-                      {label.trim() || badge}
-                    </span>
-                    {detail ? (
-                      <span className="acolhedor-badge-detail">{detail}</span>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
         </div>
         {imageUrl ? (
           <div className="acolhedor-media-frame">

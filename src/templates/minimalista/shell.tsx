@@ -1,15 +1,21 @@
 import { Instrument_Sans, Instrument_Serif } from "next/font/google";
 
 import {
+  footerNavItems,
   formatCouncil,
   previewBannerCss,
   professionalDisplayName,
   siteHref,
   siteNavItems,
+  splitPrimaryNavItems,
   whatsappHref,
   type TemplateShellProps,
 } from "@/templates/shared";
 import { scrollRevealCss } from "@/templates/scroll-reveal-css";
+import {
+  SiteMobileNav,
+  siteMobileNavCss,
+} from "@/templates/site-mobile-nav";
 import { SmoothAnchors } from "@/templates/smooth-anchors";
 
 const display = Instrument_Serif({
@@ -33,45 +39,84 @@ export function MinimalistaShell({
   const whatsapp = whatsappHref(document.professional.whatsapp);
   const council = formatCouncil(document.professional);
   const navItems = siteNavItems(document, basePath);
+  const { blog: blogItem, menuItems } = splitPrimaryNavItems(navItems);
+  const footerNav = footerNavItems(document, basePath);
 
   return (
     <div
       className={`${display.variable} ${body.variable} minimalista-root min-h-full`}
     >
-      <style>{`${previewBannerCss}${scrollRevealCss}${minimalistaCss}`}</style>
+      <style>{`${previewBannerCss}${scrollRevealCss}${siteMobileNavCss}${minimalistaCss}`}</style>
       <SmoothAnchors />
       {banner}
-      <header className="minimalista-header">
-        <div className="minimalista-wrap minimalista-header-inner">
-          <a href={siteHref("/", basePath)} className="minimalista-brand">
-            {name}
-          </a>
-          {navItems.length > 0 ? (
-            <nav className="minimalista-nav" aria-label="Seções">
-              {navItems.map((item) => (
-                <a key={item.href} href={item.href}>
-                  {item.label}
-                </a>
-              ))}
-            </nav>
-          ) : null}
-          {whatsapp ? (
-            <a
-              href={whatsapp}
-              className="minimalista-cta"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Contato
+      <div className="minimalista-top">
+        <header className="minimalista-header">
+          <div className="minimalista-wrap minimalista-header-inner">
+            <a href={siteHref("/", basePath)} className="minimalista-brand">
+              {name}
             </a>
-          ) : null}
-        </div>
-      </header>
+            {navItems.length > 0 ? (
+              <nav className="minimalista-nav" aria-label="Seções">
+                {navItems.map((item) => (
+                  <a key={item.href} href={item.href}>
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+            ) : null}
+            <div className="minimalista-header-actions">
+              {whatsapp ? (
+                <a
+                  href={whatsapp}
+                  className="minimalista-cta"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Contato
+                </a>
+              ) : null}
+              <SiteMobileNav items={menuItems} />
+            </div>
+          </div>
+        </header>
+        {blogItem || whatsapp ? (
+          <div className="minimalista-mobile-bar" aria-label="Ações rápidas">
+            <div className="minimalista-wrap minimalista-mobile-bar-inner">
+              {blogItem ? (
+                <a href={blogItem.href} className="minimalista-mobile-bar-blog">
+                  Blog
+                </a>
+              ) : (
+                <span />
+              )}
+              {whatsapp ? (
+                <a
+                  href={whatsapp}
+                  className="minimalista-mobile-bar-cta"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Agendar
+                </a>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
       <main>{children}</main>
       <footer className="minimalista-footer">
         <div className="minimalista-wrap minimalista-footer-inner">
           <p className="minimalista-footer-name">{name}</p>
           {council ? <p className="minimalista-muted">{council}</p> : null}
+          {footerNav.length > 0 ? (
+            <nav className="minimalista-footer-nav" aria-label="Rodapé">
+              {footerNav.map((item) => (
+                <a key={`${item.label}-${item.href}`} href={item.href}>
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          ) : null}
         </div>
       </footer>
     </div>
@@ -87,6 +132,12 @@ const minimalistaCss = `
   --mn-muted: #737373;
   --mn-line: #e5e5e5;
   --mn-accent: #262626;
+  --site-nav-bg: #ffffff;
+  --site-nav-ink: var(--mn-ink);
+  --site-nav-muted: var(--mn-muted);
+  --site-nav-line: var(--mn-line);
+  --site-nav-accent: var(--mn-ink);
+  --site-nav-soft: rgba(0, 0, 0, 0.05);
   background: var(--mn-bg);
   color: var(--mn-ink);
   font-family: var(--font-minimalista-body), "Segoe UI", sans-serif;
@@ -94,6 +145,11 @@ const minimalistaCss = `
 .minimalista-wrap {
   width: min(720px, calc(100% - 2.5rem));
   margin-inline: auto;
+}
+.minimalista-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 .minimalista-header {
   border-bottom: 1px solid var(--mn-line);
@@ -123,12 +179,46 @@ const minimalistaCss = `
   text-decoration: none;
   font-size: 0.9rem;
 }
+.minimalista-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
 .minimalista-cta {
+  display: none;
   color: var(--mn-ink);
   text-decoration: none;
   font-size: 0.9rem;
   border-bottom: 1px solid var(--mn-ink);
   padding-bottom: 0.1rem;
+}
+.minimalista-mobile-bar {
+  border-bottom: 1px solid var(--mn-line);
+  background: rgba(250, 250, 250, 0.97);
+}
+.minimalista-mobile-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 3rem;
+}
+.minimalista-mobile-bar-blog {
+  color: var(--mn-ink);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+.minimalista-mobile-bar-cta {
+  display: inline-flex;
+  align-items: center;
+  color: #fff;
+  background: var(--mn-ink);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
 }
 .minimalista-section {
   padding: 5rem 0;
@@ -226,7 +316,24 @@ const minimalistaCss = `
   font-family: var(--font-minimalista-display), Georgia, serif;
   font-size: 1.25rem;
 }
+.minimalista-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.85rem;
+}
+.minimalista-footer-nav a {
+  color: var(--mn-muted);
+  text-decoration: none;
+  font-size: 0.88rem;
+}
+.minimalista-footer-nav a:hover {
+  color: var(--mn-ink);
+}
 @container site (min-width: 768px) {
   .minimalista-nav { display: flex; }
+  .minimalista-cta { display: inline; }
+  .minimalista-mobile-bar { display: none; }
+  .site-mobile-nav { display: none; }
 }
 `;

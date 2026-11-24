@@ -3,6 +3,9 @@
 import { useEffect } from "react";
 
 const HEADER_SELECTORS = [
+  ".acolhedor-top",
+  ".premium-top",
+  ".minimalista-top",
   ".acolhedor-header",
   ".premium-header",
   ".minimalista-header",
