@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ArticleJsonLd } from "@/components/seo/json-ld";
 import { findBlogPost } from "@/lib/sites/document";
+import { redirectToPrimaryDomainIfNeeded } from "@/lib/sites/canonical-redirect";
 import { publicSiteBasePath } from "@/lib/sites/host";
 import {
   buildPageMetadata,
@@ -55,7 +56,11 @@ export default async function PathPublicBlogPostPage({ params }: PageProps) {
     notFound();
   }
 
+  redirectToPrimaryDomainIfNeeded(published, `/blog/${post.slug}`);
+
   const canonical = publishedCanonicalUrl(published, `/blog/${post.slug}`);
+  const homeUrl = publishedCanonicalUrl(published, "/");
+  const blogUrl = publishedCanonicalUrl(published, "/blog");
 
   return (
     <>
@@ -63,6 +68,8 @@ export default async function PathPublicBlogPostPage({ params }: PageProps) {
         document={published.document}
         post={post}
         url={canonical}
+        homeUrl={homeUrl}
+        blogUrl={blogUrl}
       />
       <BlogPostRenderer
         document={published.document}

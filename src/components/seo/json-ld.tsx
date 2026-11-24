@@ -20,6 +20,31 @@ function JsonLdScript({ data }: { data: Record<string, unknown> }) {
   );
 }
 
+export function BreadcrumbJsonLd({
+  items,
+}: {
+  items: Array<{ name: string; url: string }>;
+}) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <JsonLdScript
+      data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: items.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: item.name,
+          item: item.url,
+        })),
+      }}
+    />
+  );
+}
+
 export function SiteJsonLd({
   document,
   url,
@@ -58,8 +83,21 @@ export function SiteJsonLd({
     person.sameAs = sameAs;
   }
 
+  const address = officeAddress(
+    pro.office_address,
+    seo.serviceScope === "online" ? null : seo.locality,
+    seo.serviceScope === "online" ? null : seo.region,
+  );
+
+  const useLocalBusiness =
+    seo.serviceScope !== "online" && Boolean(address);
+
+  const orgType = useLocalBusiness
+    ? (["LocalBusiness", "ProfessionalService"] as const)
+    : ("ProfessionalService" as const);
+
   const service: Record<string, unknown> = {
-    "@type": "ProfessionalService",
+    "@type": orgType,
     "@id": `${url}#service`,
     name,
     url,
@@ -83,11 +121,6 @@ export function SiteJsonLd({
     service.sameAs = sameAs;
   }
 
-  const address = officeAddress(
-    pro.office_address,
-    seo.serviceScope === "online" ? null : seo.locality,
-    seo.serviceScope === "online" ? null : seo.region,
-  );
   if (address) {
     service.address = address;
     person.address = address;
@@ -160,14 +193,19 @@ export function ArticleJsonLd({
   document,
   post,
   url,
+  homeUrl,
+  blogUrl,
 }: {
   document: SiteDocument;
   post: SiteDocumentBlogPost;
   url: string;
+  homeUrl: string;
+  blogUrl: string;
 }) {
   const meta = postSeoMetadata(document, post);
   const author = professionalDisplayName(document.professional);
   const seo = seoFromDocument(document);
+  const publishedAt = post.published_at ?? undefined;
 
   const data: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -179,18 +217,37 @@ export function ArticleJsonLd({
     author: {
       "@type": "Person",
       name: author,
-      ...(seo.locality ? { address: { "@type": "PostalAddress", addressLocality: seo.locality } } : {}),
+      ...(seo.locality
+        ? {
+            address: {
+              "@type": "PostalAddress",
+              addressLocality: seo.locality,
+            },
+          }
+        : {}),
     },
   };
 
   if (meta.ogImage) {
     data.image = meta.ogImage;
   }
-  if (post.published_at) {
-    data.datePublished = post.published_at;
+  if (publishedAt) {
+    data.datePublished = publishedAt;
+    data.dateModified = publishedAt;
   }
 
-  return <JsonLdScript data={data} />;
+  return (
+    <>
+      <JsonLdScript data={data} />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Início", url: homeUrl },
+          { name: document.blog.title || "Blog", url: blogUrl },
+          { name: post.title, url },
+        ]}
+      />
+    </>
+  );
 }
 
 function officeAddress(

@@ -11,6 +11,7 @@ import {
   StatusChip,
 } from "@/components/portal";
 import { SeoChecklist } from "@/components/seo/seo-checklist";
+import { SeoCrawlLinks } from "@/components/seo/seo-crawl-links";
 import { SeoPageIntro } from "@/components/seo/seo-page-intro";
 import { requireAdminProfile } from "@/lib/auth/admin";
 import { professionalDisplayName } from "@/lib/sites/document";
@@ -19,6 +20,7 @@ import { getPreviewDocument } from "@/lib/sites/preview";
 import { getSite } from "@/lib/sites/queries";
 import {
   buildSeoChecklist,
+  publishedCanonicalUrl,
   seoFromDocument,
   siteSeoFromRecord,
 } from "@/lib/sites/seo";
@@ -59,6 +61,13 @@ export default async function AdminSiteSeoPage({ params }: PageProps) {
   const hostLabel =
     primaryDomain?.domain ??
     publicSiteUrl(site.slug).replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const publicOrigin = publishedCanonicalUrl(
+    {
+      slug: site.slug,
+      primary_domain: primaryDomain?.domain ?? null,
+    },
+    "/",
+  ).replace(/\/$/, "");
 
   const seoChecklist = buildSeoChecklist({
     seo: site.seo,
@@ -173,6 +182,13 @@ export default async function AdminSiteSeoPage({ params }: PageProps) {
         description="Um mapa do que já está ok e do que ainda falta — incluindo FAQ, redes e domínio."
       >
         <SeoChecklist items={seoChecklist} />
+      </PortalSection>
+
+      <PortalSection
+        title="Rastreamento e testes"
+        description="Arquivos que o Google lê e atalhos para validar o site publicado."
+      >
+        <SeoCrawlLinks publicOrigin={publicOrigin} isLive={isLive} />
       </PortalSection>
     </PortalPage>
   );

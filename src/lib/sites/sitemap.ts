@@ -47,7 +47,7 @@ export function buildPublishedSitemapEntries(
   return entries;
 }
 
-/** Sitemap em XML. Rota `/sitemap` (não `/sitemap.xml`) evita bug do Next 16 com segmentos dinâmicos. */
+/** Sitemap em XML. Preferir rota pública `/sitemap.xml` (alias `/sitemap` mantido). */
 export function renderSitemapXml(published: PublishedSite): string {
   const entries = buildPublishedSitemapEntries(published);
   const urls = entries
@@ -70,7 +70,7 @@ ${urls}
 }
 
 export function renderRobotsTxt(published: PublishedSite): string {
-  const sitemap = publishedCanonicalUrl(published, "/sitemap");
+  const sitemap = publishedCanonicalUrl(published, "/sitemap.xml");
   return `User-agent: *
 Allow: /
 

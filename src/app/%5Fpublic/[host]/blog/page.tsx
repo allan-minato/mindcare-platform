@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { redirectToPrimaryDomainIfNeeded } from "@/lib/sites/canonical-redirect";
 import {
   buildPageMetadata,
   publishedCanonicalUrl,
@@ -45,7 +47,20 @@ export default async function PublicBlogPage({ params }: PageProps) {
     notFound();
   }
 
+  redirectToPrimaryDomainIfNeeded(published, "/blog", host);
+
+  const homeUrl = publishedCanonicalUrl(published, "/");
+  const blogUrl = publishedCanonicalUrl(published, "/blog");
+
   return (
-    <BlogListRenderer document={published.document} mode="public" />
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Início", url: homeUrl },
+          { name: published.document.blog.title || "Blog", url: blogUrl },
+        ]}
+      />
+      <BlogListRenderer document={published.document} mode="public" />
+    </>
   );
 }

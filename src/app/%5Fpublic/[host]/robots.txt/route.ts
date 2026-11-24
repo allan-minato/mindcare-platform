@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { primaryDomainRedirectResponse } from "@/lib/sites/canonical-redirect";
 import {
   renderRobotsTxt,
   robotsResponse,
@@ -17,6 +18,14 @@ export async function GET(_request: Request, { params }: RouteProps) {
   const published = await getPublishedByHost(host);
   if (!published) {
     notFound();
+  }
+  const redirect = primaryDomainRedirectResponse(
+    published,
+    "/robots.txt",
+    host,
+  );
+  if (redirect) {
+    return redirect;
   }
   return robotsResponse(renderRobotsTxt(published));
 }

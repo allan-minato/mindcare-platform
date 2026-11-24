@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { SiteJsonLd } from "@/components/seo/json-ld";
+import { redirectToPrimaryDomainIfNeeded } from "@/lib/sites/canonical-redirect";
 import {
   buildPageMetadata,
   publishedCanonicalUrl,
@@ -42,6 +43,8 @@ export default async function PublicSitePage({ params }: PageProps) {
   if (!published) {
     notFound();
   }
+
+  redirectToPrimaryDomainIfNeeded(published, "/", host);
 
   const canonical = publishedCanonicalUrl(published, "/");
 

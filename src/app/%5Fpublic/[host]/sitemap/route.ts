@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { primaryDomainRedirectResponse } from "@/lib/sites/canonical-redirect";
 import {
   renderSitemapXml,
   sitemapResponse,
@@ -12,11 +13,20 @@ type RouteProps = {
   params: Promise<{ host: string }>;
 };
 
+/** Alias legado: preferir `/sitemap.xml`. */
 export async function GET(_request: Request, { params }: RouteProps) {
   const { host } = await params;
   const published = await getPublishedByHost(host);
   if (!published) {
     notFound();
+  }
+  const redirect = primaryDomainRedirectResponse(
+    published,
+    "/sitemap.xml",
+    host,
+  );
+  if (redirect) {
+    return redirect;
   }
   return sitemapResponse(renderSitemapXml(published));
 }
