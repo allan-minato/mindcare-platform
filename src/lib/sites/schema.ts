@@ -59,6 +59,8 @@ export type SiteDetail = {
   live_publication_id: string | null;
   published_version: number | null;
   published_at: string | null;
+  /** Rascunho mais novo que o snapshot público — precisa republicar. */
+  has_pending_changes: boolean;
   created_at: string;
   updated_at: string;
   domains: SiteDomain[];

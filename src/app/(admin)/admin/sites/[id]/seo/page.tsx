@@ -11,11 +11,15 @@ import {
   StatusChip,
 } from "@/components/portal";
 import { SeoChecklist } from "@/components/seo/seo-checklist";
+import { SeoPageIntro } from "@/components/seo/seo-page-intro";
 import { requireAdminProfile } from "@/lib/auth/admin";
+import { professionalDisplayName } from "@/lib/sites/document";
+import { publicSiteUrl } from "@/lib/sites/host";
 import { getPreviewDocument } from "@/lib/sites/preview";
 import { getSite } from "@/lib/sites/queries";
 import {
   buildSeoChecklist,
+  seoFromDocument,
   siteSeoFromRecord,
 } from "@/lib/sites/seo";
 
@@ -43,10 +47,19 @@ export default async function AdminSiteSeoPage({ params }: PageProps) {
 
   const sections = site.home_page?.sections ?? [];
   const isLive = Boolean(site.live_publication_id);
+  const hasPendingChanges = site.has_pending_changes;
   const hasVerifiedDomain = site.domains.some(
     (domain) => domain.verification_status === "verified",
   );
   const seoFields = siteSeoFromRecord(site.seo);
+  const derived = seoFromDocument(baseDocument);
+  const primaryDomain = site.domains.find(
+    (domain) => domain.is_primary && domain.verification_status === "verified",
+  );
+  const hostLabel =
+    primaryDomain?.domain ??
+    publicSiteUrl(site.slug).replace(/^https?:\/\//, "").replace(/\/$/, "");
+
   const seoChecklist = buildSeoChecklist({
     seo: site.seo,
     document: baseDocument,
@@ -57,30 +70,50 @@ export default async function AdminSiteSeoPage({ params }: PageProps) {
     })),
     hasVerifiedDomain,
     isLive,
+    hasPendingChanges,
   });
   const saveSeo = updateSiteSeo.bind(null, site.id, "admin");
 
   return (
-    <PortalPage>
+    <PortalPage wide className="seo-page">
       <PortalPageHeader
         backHref={`/admin/sites/${id}`}
-        backLabel="Voltar à página inicial"
+        backLabel="Voltar ao editor"
         kicker="SEO"
         title="SEO e descoberta"
-        lead={`${site.name} · Google, compartilhamento e recomendações`}
+        lead={`${site.name} · busca, compartilhamento e sinais locais`}
         actions={
           <>
             <StatusChip
               live={isLive}
+              pending={hasPendingChanges}
               label={
-                isLive ? `No ar · v${site.published_version ?? "—"}` : "Rascunho"
+                hasPendingChanges
+                  ? `No ar · v${site.published_version ?? "—"} · republicar`
+                  : isLive
+                    ? `No ar · v${site.published_version ?? "—"} · atualizado`
+                    : "Rascunho"
               }
             />
+            <Link
+              href={`/admin/sites/${id}`}
+              className={`portal-btn ${
+                hasPendingChanges ? "portal-btn-attention" : "portal-btn-ghost"
+              }`}
+            >
+              {hasPendingChanges ? "Republicar" : "Editor"}
+            </Link>
             <Link
               href={`/admin/sites/${id}/blog`}
               className="portal-btn portal-btn-ghost"
             >
               Blog
+            </Link>
+            <Link
+              href={`/admin/sites/${id}/domains`}
+              className="portal-btn portal-btn-ghost"
+            >
+              Domínios
             </Link>
             <Link
               href={`/preview/${id}`}
@@ -94,16 +127,50 @@ export default async function AdminSiteSeoPage({ params }: PageProps) {
         }
       />
 
+      <SeoPageIntro publishNote="as mudanças só vão ao ar na próxima publicação." />
+
+      {hasPendingChanges ? (
+        <div className="publish-pending-banner" role="status">
+          <strong>Há mudanças ainda não publicadas.</strong>
+          <span>
+            {" "}
+            Volte ao editor e clique em{" "}
+            <Link href={`/admin/sites/${id}`} className="underline-offset-4 hover:underline">
+              Republicar agora
+            </Link>{" "}
+            para o SEO ir ao ar.
+          </span>
+        </div>
+      ) : isLive ? (
+        <div className="publish-pending-banner publish-pending-banner-ok" role="status">
+          <strong>SEO alinhado com o site no ar.</strong>
+          <span>
+            {" "}
+            Depois de editar e salvar, será preciso republicar de novo.
+          </span>
+        </div>
+      ) : null}
+
       <PortalSection
-        title="Metadados do site"
-        description="Título, descrição, local e imagem. Entram no ar na próxima publicação."
+        title="Metadados e prévia"
+        description="Edite à esquerda e acompanhe como o resultado pode aparecer na busca e ao compartilhar o link."
       >
-        <SiteSeoForm action={saveSeo} initial={seoFields} />
+        <SiteSeoForm
+          action={saveSeo}
+          initial={seoFields}
+          fallbackTitle={professionalDisplayName(baseDocument.professional)}
+          fallbackDescription={derived.description}
+          fallbackImageUrl={
+            baseDocument.professional.photo_url?.trim() || null
+          }
+          siteHostLabel={hostLabel}
+          attendanceModes={baseDocument.professional.attendance_modes}
+        />
       </PortalSection>
 
       <PortalSection
-        title="Checklist"
-        description="O que falta para o site aparecer bem em busca e em respostas com web."
+        title="Checklist de descoberta"
+        description="Um mapa do que já está ok e do que ainda falta — incluindo FAQ, redes e domínio."
       >
         <SeoChecklist items={seoChecklist} />
       </PortalSection>

@@ -29,6 +29,9 @@ const optionalHttpsUrl = z
     message: "A URL precisa começar com https://.",
   });
 
+export const seoServiceScopes = ["local", "online", "hybrid"] as const;
+export type SeoServiceScope = (typeof seoServiceScopes)[number];
+
 export const siteSeoFormSchema = z.object({
   title: z
     .string()
@@ -52,6 +55,7 @@ export const siteSeoFormSchema = z.object({
         message: "Use só o código de verificação do Google (sem tags HTML).",
       },
     ),
+  service_scope: z.enum(seoServiceScopes).default("local"),
   locality: z
     .string()
     .trim()
@@ -72,10 +76,19 @@ export type SiteSeoFields = {
   description: string | null;
   og_image_url: string | null;
   google_site_verification: string | null;
+  /** null = ainda não definido no SEO; inferimos pelos modos do profissional. */
+  service_scope: SeoServiceScope | null;
   locality: string | null;
   region: string | null;
   google_business_url: string | null;
 };
+
+export function isSeoServiceScope(value: unknown): value is SeoServiceScope {
+  return (
+    typeof value === "string" &&
+    seoServiceScopes.some((scope) => scope === value)
+  );
+}
 
 export type DocumentFaqItem = {
   question: string;
@@ -91,6 +104,9 @@ export function siteSeoFromRecord(
     description: stringOrNull(source.description),
     og_image_url: stringOrNull(source.og_image_url),
     google_site_verification: stringOrNull(source.google_site_verification),
+    service_scope: isSeoServiceScope(source.service_scope)
+      ? source.service_scope
+      : null,
     locality: stringOrNull(source.locality),
     region: stringOrNull(source.region),
     google_business_url: stringOrNull(source.google_business_url),
@@ -105,6 +121,7 @@ export function parseSiteSeoForm(formData: FormData) {
     google_site_verification: String(
       formData.get("google_site_verification") ?? "",
     ),
+    service_scope: String(formData.get("service_scope") ?? "local"),
     locality: String(formData.get("locality") ?? ""),
     region: String(formData.get("region") ?? ""),
     google_business_url: String(formData.get("google_business_url") ?? ""),
@@ -121,6 +138,7 @@ export function mergeSiteSeo(
   setOrDelete(next, "description", values.description);
   setOrDelete(next, "og_image_url", values.og_image_url);
   setOrDelete(next, "google_site_verification", values.google_site_verification);
+  next.service_scope = values.service_scope;
   setOrDelete(next, "locality", values.locality);
   setOrDelete(next, "region", values.region);
   setOrDelete(next, "google_business_url", values.google_business_url);
@@ -132,6 +150,7 @@ export function seoFromDocument(document: SiteDocument): {
   description: string;
   ogImage: string | null;
   googleSiteVerification: string | null;
+  serviceScope: SeoServiceScope;
   locality: string | null;
   region: string | null;
   googleBusinessUrl: string | null;
@@ -140,12 +159,21 @@ export function seoFromDocument(document: SiteDocument): {
   const name = professionalDisplayName(document.professional);
   const officeCity = officeCityFromProfessional(document.professional.office_address);
   const locality = fields.locality ?? officeCity;
+  const region =
+    fields.region ??
+    officeRegionFromProfessional(document.professional.office_address);
+  const serviceScope = resolveServiceScope(
+    fields.service_scope,
+    document.professional.attendance_modes,
+  );
 
   let description = fields.description;
   if (!description) {
-    description = locality
-      ? `Atendimento clínico com ${name} em ${locality}.`
-      : `Atendimento clínico com ${name}.`;
+    description = defaultSeoDescription({
+      name,
+      locality,
+      serviceScope,
+    });
   }
 
   return {
@@ -156,10 +184,78 @@ export function seoFromDocument(document: SiteDocument): {
       document.professional.photo_url?.trim() ??
       null,
     googleSiteVerification: fields.google_site_verification,
+    serviceScope,
     locality,
-    region: fields.region ?? officeRegionFromProfessional(document.professional.office_address),
+    region,
     googleBusinessUrl: fields.google_business_url,
   };
+}
+
+export function buildAreaServed(input: {
+  serviceScope: SeoServiceScope;
+  locality: string | null;
+  region: string | null;
+}): Record<string, unknown> | Record<string, unknown>[] | null {
+  const { serviceScope, locality, region } = input;
+
+  if (serviceScope === "online") {
+    const areas: Record<string, unknown>[] = [
+      {
+        "@type": "Country",
+        name: "Brasil",
+      },
+    ];
+    if (locality || region) {
+      areas.push({
+        "@type": locality ? "City" : "State",
+        name: locality ?? region,
+        ...(locality && region
+          ? {
+              containedInPlace: {
+                "@type": "State",
+                name: region,
+              },
+            }
+          : {}),
+      });
+    }
+    return areas;
+  }
+
+  if (locality) {
+    return {
+      "@type": "City",
+      name: locality,
+      ...(region
+        ? {
+            containedInPlace: {
+              "@type": "State",
+              name: region,
+            },
+          }
+        : {}),
+    };
+  }
+
+  if (region) {
+    return {
+      "@type": "State",
+      name: region,
+      containedInPlace: {
+        "@type": "Country",
+        name: "Brasil",
+      },
+    };
+  }
+
+  if (serviceScope === "hybrid") {
+    return {
+      "@type": "Country",
+      name: "Brasil",
+    };
+  }
+
+  return null;
 }
 
 /** FAQ visível no snapshot (só seções publicadas entram no document). */
@@ -332,6 +428,7 @@ export function buildSeoChecklist(input: {
   sections?: SeoChecklistSectionInput[];
   hasVerifiedDomain: boolean;
   isLive: boolean;
+  hasPendingChanges?: boolean;
 }): SeoChecklistItem[] {
   const fields = siteSeoFromRecord(input.seo);
   const posts = input.document?.blog.posts ?? [];
@@ -340,7 +437,13 @@ export function buildSeoChecklist(input: {
   const officeCity = input.document
     ? officeCityFromProfessional(input.document.professional.office_address)
     : null;
+  const serviceScope = resolveServiceScope(
+    fields.service_scope,
+    input.document?.professional.attendance_modes,
+  );
   const hasLocality = Boolean(fields.locality || officeCity);
+  const locationOk =
+    serviceScope === "online" || serviceScope === "hybrid" || hasLocality;
   const socialCount = input.document ? socialProfileUrls(input.document).length : 0;
   const faqState = resolveFaqChecklist(input.sections, input.document);
 
@@ -372,11 +475,15 @@ export function buildSeoChecklist(input: {
     },
     {
       id: "live",
-      label: "Site publicado",
-      ok: input.isLive,
-      hint: input.isLive
-        ? undefined
-        : "SEO público só vale depois que a equipe publica o snapshot.",
+      label: input.hasPendingChanges
+        ? "Snapshot público atualizado"
+        : "Site publicado",
+      ok: input.isLive && !input.hasPendingChanges,
+      hint: input.hasPendingChanges
+        ? "Há mudanças no rascunho. Republicar para o público ver a versão nova."
+        : input.isLive
+          ? undefined
+          : "SEO público só vale depois que a equipe publica o snapshot.",
       group: "basico",
     },
     {
@@ -390,11 +497,16 @@ export function buildSeoChecklist(input: {
     },
     {
       id: "locality",
-      label: "Cidade / região de atendimento",
-      ok: hasLocality,
-      hint: hasLocality
-        ? undefined
-        : "Ajuda Google e ChatGPT a associar você a buscas locais (ex.: psicólogo em Curitiba).",
+      label:
+        serviceScope === "online"
+          ? "Atendimento online definido"
+          : "Cidade / região de atendimento",
+      ok: locationOk,
+      hint: locationOk
+        ? serviceScope === "online" && hasLocality
+          ? "Online no Brasil · cidade usada como base (opcional)."
+          : undefined
+        : "Para presencial, informe a cidade. Para online, escolha “Só online” no modo de atendimento.",
       group: "descoberta",
     },
     {
@@ -498,6 +610,46 @@ function setOrDelete(
   } else {
     delete target[key];
   }
+}
+
+export function resolveServiceScope(
+  stored: SeoServiceScope | null,
+  attendanceModes: string[] | null | undefined,
+): SeoServiceScope {
+  if (stored) {
+    return stored;
+  }
+  const modes = new Set(attendanceModes ?? []);
+  const online = modes.has("online");
+  const inPerson = modes.has("in_person");
+  if (online && !inPerson) {
+    return "online";
+  }
+  if (online && inPerson) {
+    return "hybrid";
+  }
+  return "local";
+}
+
+function defaultSeoDescription(input: {
+  name: string;
+  locality: string | null;
+  serviceScope: SeoServiceScope;
+}): string {
+  const { name, locality, serviceScope } = input;
+  if (serviceScope === "online") {
+    return locality
+      ? `Atendimento clínico online com ${name}. Base em ${locality}.`
+      : `Atendimento clínico online com ${name} em todo o Brasil.`;
+  }
+  if (serviceScope === "hybrid") {
+    return locality
+      ? `Atendimento clínico presencial e online com ${name} (${locality}).`
+      : `Atendimento clínico presencial e online com ${name}.`;
+  }
+  return locality
+    ? `Atendimento clínico com ${name} em ${locality}.`
+    : `Atendimento clínico com ${name}.`;
 }
 
 function officeCityFromProfessional(value: unknown): string | null {

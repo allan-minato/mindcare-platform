@@ -256,6 +256,8 @@ async function refreshSiteDomainCache(
     updateTag(`domain:${domain}`);
   }
   revalidatePath(`/admin/sites/${siteId}`);
+  revalidatePath(`/admin/sites/${siteId}/domains`);
+  revalidatePath(`/admin/sites/${siteId}/seo`);
   revalidatePath("/admin/sites");
 }
 

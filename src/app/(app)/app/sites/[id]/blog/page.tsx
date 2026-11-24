@@ -43,7 +43,7 @@ export default async function AppSiteBlogPage({ params }: PageProps) {
     <PortalPage>
       <PortalPageHeader
         backHref={`/app/sites/${id}`}
-        backLabel="Voltar à página inicial"
+        backLabel="Voltar ao editor"
         kicker="Blog"
         title="Blog"
         lead={site.name}

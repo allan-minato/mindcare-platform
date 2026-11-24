@@ -38,6 +38,7 @@ export default async function PortalSitePage({ params }: PageProps) {
   const sections = site.home_page?.sections ?? [];
   const previewHref = `/preview/${site.id}`;
   const live = Boolean(site.live_publication_id);
+  const hasPendingChanges = site.has_pending_changes;
 
   const header = (
     <PortalPageHeader
@@ -50,8 +51,13 @@ export default async function PortalSitePage({ params }: PageProps) {
         <>
           <StatusChip
             live={live}
+            pending={hasPendingChanges}
             label={
-              live ? `No ar · v${site.published_version ?? "—"}` : "Rascunho"
+              hasPendingChanges
+                ? `No ar · v${site.published_version ?? "—"} · aguardando publicação`
+                : live
+                  ? `No ar · v${site.published_version ?? "—"} · atualizado`
+                  : "Rascunho"
             }
           />
           <Link

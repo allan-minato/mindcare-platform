@@ -11,6 +11,7 @@ import {
 type SitePublishControlsProps = {
   siteId: string;
   isLive: boolean;
+  hasPendingChanges?: boolean;
   publicUrl: string;
   statusLabel: string;
 };
@@ -20,6 +21,7 @@ const initialState: PublishActionState = {};
 export function SitePublishControls({
   siteId,
   isLive,
+  hasPendingChanges = false,
   publicUrl,
   statusLabel,
 }: SitePublishControlsProps) {
@@ -36,11 +38,14 @@ export function SitePublishControls({
 
   const error = publishState.error ?? unpublishState.error;
   const pending = publishPending || unpublishPending;
+  const needsRepublish = isLive && hasPendingChanges;
 
   return (
-    <div className="grid gap-3">
+    <div className="publish-controls">
       <div className="grid gap-1">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{statusLabel}</p>
+        <p className="portal-hint" style={{ margin: 0 }}>
+          {statusLabel}
+        </p>
         {isLive ? (
           <a
             href={publicUrl}
@@ -51,20 +56,61 @@ export function SitePublishControls({
             Abrir site público
           </a>
         ) : (
-          <p className="text-sm text-zinc-500">
-            Publique para gerar o snapshot no host interno.
+          <p className="portal-hint" style={{ margin: 0 }}>
+            Publique para gerar o snapshot no ar.
           </p>
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      {needsRepublish ? (
+        <div className="publish-pending-banner" role="status">
+          <strong>Há mudanças no rascunho.</strong>
+          <span>
+            {" "}
+            SEO, textos, blog ou perfil foram alterados depois da última
+            publicação. Clique em <em>Republicar</em> para ir ao ar.
+          </span>
+        </div>
+      ) : null}
+
+      {isLive && !hasPendingChanges ? (
+        <div className="publish-pending-banner publish-pending-banner-ok" role="status">
+          <strong>Site atualizado no ar.</strong>
+          <span>
+            {" "}
+            O público já vê a versão mais recente do rascunho. Só republicar se
+            fizer novas edições.
+          </span>
+        </div>
+      ) : null}
+
+      {!isLive ? (
+        <div className="publish-pending-banner publish-pending-banner-info" role="status">
+          <strong>Site ainda em rascunho.</strong>
+          <span> Publique para o público ver a versão atual.</span>
+        </div>
+      ) : null}
+
+      <div className="publish-controls-actions">
         <form action={publishAction}>
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+            className={`portal-btn ${
+              needsRepublish || !isLive
+                ? "portal-btn-attention"
+                : "portal-btn-primary"
+            } disabled:opacity-60`}
           >
-            {isLive ? "Republicar" : "Publicar"}
+            {publishPending
+              ? isLive
+                ? "Republicando…"
+                : "Publicando…"
+              : isLive
+                ? needsRepublish
+                  ? "Republicar agora"
+                  : "Republicar"
+                : "Publicar"}
           </button>
         </form>
         {isLive ? (
@@ -72,17 +118,15 @@ export function SitePublishControls({
             <button
               type="submit"
               disabled={pending}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium disabled:opacity-60 dark:border-zinc-700"
+              className="portal-btn portal-btn-danger disabled:opacity-60"
             >
-              Despublicar
+              {unpublishPending ? "Despublicando…" : "Despublicar"}
             </button>
           </form>
         ) : null}
       </div>
 
-      {error ? (
-        <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-      ) : null}
+      {error ? <p className="portal-error">{error}</p> : null}
     </div>
   );
 }

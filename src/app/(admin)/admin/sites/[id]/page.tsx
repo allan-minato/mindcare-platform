@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { SiteDomainsPanel } from "@/app/(admin)/admin/sites/site-domains-panel";
 import { SitePublishControls } from "@/app/(admin)/admin/sites/site-publish-controls";
 import { SiteSectionsEditor } from "@/app/(admin)/admin/sites/site-sections-editor";
 import {
@@ -18,7 +17,6 @@ import { getSite } from "@/lib/sites/queries";
 import { templateLabel } from "@/lib/templates/registry";
 
 export const instant = false;
-
 
 export const metadata: Metadata = {
   title: "Site · MindCare",
@@ -43,8 +41,11 @@ export default async function SiteDetailPage({ params }: PageProps) {
 
   const sections = site.home_page?.sections ?? [];
   const isLive = Boolean(site.live_publication_id);
+  const hasPendingChanges = site.has_pending_changes;
   const statusLabel = isLive
-    ? `No ar · v${site.published_version ?? "—"} · ${formatPublishedAt(site.published_at)}`
+    ? hasPendingChanges
+      ? `No ar · v${site.published_version ?? "—"} · há mudanças no rascunho`
+      : `No ar · v${site.published_version ?? "—"} · ${formatPublishedAt(site.published_at)}`
     : "Rascunho — ainda não está no ar";
   const previewHref = `/preview/${site.id}`;
 
@@ -72,8 +73,13 @@ export default async function SiteDetailPage({ params }: PageProps) {
         <>
           <StatusChip
             live={isLive}
+            pending={hasPendingChanges}
             label={
-              isLive ? `No ar · v${site.published_version ?? "—"}` : "Rascunho"
+              hasPendingChanges
+                ? `No ar · v${site.published_version ?? "—"} · republicar`
+                : isLive
+                  ? `No ar · v${site.published_version ?? "—"} · atualizado`
+                  : "Rascunho"
             }
           />
           <Link
@@ -87,6 +93,12 @@ export default async function SiteDetailPage({ params }: PageProps) {
             className="portal-btn portal-btn-ghost"
           >
             Blog
+          </Link>
+          <Link
+            href={`/admin/sites/${site.id}/domains`}
+            className="portal-btn portal-btn-ghost"
+          >
+            Domínios
           </Link>
           <Link
             href={previewHref}
@@ -108,6 +120,7 @@ export default async function SiteDetailPage({ params }: PageProps) {
           <SitePublishControls
             siteId={site.id}
             isLive={isLive}
+            hasPendingChanges={hasPendingChanges}
             publicUrl={publicSiteUrl(site.slug)}
             statusLabel={statusLabel}
           />
@@ -141,19 +154,6 @@ export default async function SiteDetailPage({ params }: PageProps) {
         ) : (
           <p className="portal-error">Página `/` não encontrada.</p>
         )}
-      </PortalSection>
-
-      <PortalSection
-        title="Domínios"
-        description="Cadastre o host do cliente e marque como verificado para o snapshot público resolver pelo domínio personalizado."
-      >
-        <SiteDomainsPanel
-          siteId={site.id}
-          domains={site.domains}
-          canManage={canPublish}
-          platformUrl={publicSiteUrl(site.slug)}
-          isLive={isLive}
-        />
       </PortalSection>
     </>
   );

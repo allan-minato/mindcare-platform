@@ -101,48 +101,65 @@ export function SiteDomainsPanel({
       )}
 
       {canManage ? (
-        <form action={addAction} className="grid gap-2 sm:grid-cols-[1fr_auto]">
+        <div className="grid gap-3 rounded-[10px] border border-dashed border-[rgba(20,18,16,0.16)] bg-[rgba(255,252,248,0.55)] px-3 py-3">
           <div className="grid gap-1">
-            <label htmlFor="domain" className="sr-only">
-              Domínio
+            <label htmlFor="domain" className="text-sm font-medium">
+              Adicionar domínio personalizado
             </label>
-            <input
-              id="domain"
-              name="domain"
-              type="text"
-              required
-              placeholder="clinica.exemplo.com.br"
-              className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
-            />
-            {addState.fieldErrors?.domain?.[0] ? (
-              <p className="text-sm text-red-700 dark:text-red-400">
-                {addState.fieldErrors.domain[0]}
+            <p className="portal-hint" style={{ margin: 0 }}>
+              Digite o domínio já comprado (ou o subdomínio), sem{" "}
+              <code className="seo-code">https://</code>. Ex.:{" "}
+              <code className="seo-code">clinica.com.br</code> ou{" "}
+              <code className="seo-code">www.clinica.com.br</code>. Isso só
+              registra no MindCare — a compra e o DNS continuam no registrador /
+              Railway.
+            </p>
+          </div>
+          <form action={addAction} className="grid gap-2 sm:grid-cols-[1fr_auto]">
+            <div className="grid gap-1">
+              <input
+                id="domain"
+                name="domain"
+                type="text"
+                required
+                placeholder="clinica.exemplo.com.br"
+                className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+              />
+              {addState.fieldErrors?.domain?.[0] ? (
+                <p className="text-sm text-red-700 dark:text-red-400">
+                  {addState.fieldErrors.domain[0]}
+                </p>
+              ) : null}
+            </div>
+            <button
+              type="submit"
+              disabled={addPending}
+              className="portal-btn portal-btn-primary disabled:opacity-60"
+            >
+              {addPending ? "Adicionando…" : "Adicionar domínio"}
+            </button>
+            {addState.error ? (
+              <p className="text-sm text-red-700 sm:col-span-2 dark:text-red-400">
+                {addState.error}
               </p>
             ) : null}
-          </div>
-          <button
-            type="submit"
-            disabled={addPending}
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
-          >
-            Adicionar domínio
-          </button>
-          {addState.error ? (
-            <p className="text-sm text-red-700 sm:col-span-2 dark:text-red-400">
-              {addState.error}
-            </p>
-          ) : null}
-        </form>
+          </form>
+        </div>
       ) : (
         <p className="text-sm text-zinc-500">
           Sua conta pode ver os domínios, mas não gerenciá-los.
         </p>
       )}
 
-      <p className="text-xs text-zinc-500">
-        DNS e certificado ficam fora do app. Marque como verificado só depois
-        que o host apontar para a plataforma.
-      </p>
+      <details className="seo-guide">
+        <summary>Lembrete rápido: compra → DNS → verificar aqui</summary>
+        <ol className="seo-guide-steps">
+          <li>Comprar domínio fora do MindCare (Registro.br, etc.).</li>
+          <li>Cadastrar o domínio no Railway (ou host) e aguardar SSL.</li>
+          <li>Apontar DNS no registrador para o host.</li>
+          <li>Adicionar o mesmo nome aqui e marcar verificado só quando abrir em https.</li>
+        </ol>
+      </details>
     </div>
   );
 }

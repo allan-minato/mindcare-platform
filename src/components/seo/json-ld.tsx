@@ -4,6 +4,7 @@ import {
   type SiteDocumentBlogPost,
 } from "@/lib/sites/document";
 import {
+  buildAreaServed,
   documentFaqItems,
   postSeoMetadata,
   seoFromDocument,
@@ -82,35 +83,51 @@ export function SiteJsonLd({
     service.sameAs = sameAs;
   }
 
-  const address = officeAddress(pro.office_address, seo.locality, seo.region);
+  const address = officeAddress(
+    pro.office_address,
+    seo.serviceScope === "online" ? null : seo.locality,
+    seo.serviceScope === "online" ? null : seo.region,
+  );
   if (address) {
     service.address = address;
     person.address = address;
-  }
-
-  if (seo.locality) {
-    service.areaServed = {
-      "@type": "City",
-      name: seo.locality,
-      ...(seo.region
-        ? {
-            containedInPlace: {
-              "@type": "State",
-              name: seo.region,
-            },
-          }
-        : {}),
+  } else if (seo.serviceScope === "online" && (seo.locality || seo.region)) {
+    // Base do profissional (não consultório presencial).
+    person.homeLocation = {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        ...(seo.locality ? { addressLocality: seo.locality } : {}),
+        ...(seo.region ? { addressRegion: seo.region } : {}),
+        addressCountry: "BR",
+      },
     };
   }
 
-  const modes = pro.attendance_modes?.filter(Boolean) ?? [];
-  if (modes.length > 0) {
-    service.availableChannel = modes.map((mode) => ({
-      "@type": "ServiceChannel",
-      serviceType: mode === "online" ? "Online" : "Presencial",
-      ...(mode === "online" ? { serviceUrl: url } : {}),
-    }));
+  const areaServed = buildAreaServed({
+    serviceScope: seo.serviceScope,
+    locality: seo.locality,
+    region: seo.region,
+  });
+  if (areaServed) {
+    service.areaServed = areaServed;
   }
+
+  const modesFromProfile = pro.attendance_modes?.filter(Boolean) ?? [];
+  const modes =
+    modesFromProfile.length > 0
+      ? modesFromProfile
+      : seo.serviceScope === "online"
+        ? ["online"]
+        : seo.serviceScope === "hybrid"
+          ? ["online", "in_person"]
+          : ["in_person"];
+
+  service.availableChannel = modes.map((mode) => ({
+    "@type": "ServiceChannel",
+    serviceType: mode === "online" ? "Online" : "Presencial",
+    ...(mode === "online" ? { serviceUrl: url } : {}),
+  }));
 
   const graph: Record<string, unknown>[] = [person, service];
 

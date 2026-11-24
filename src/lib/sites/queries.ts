@@ -228,7 +228,16 @@ export async function getSite(id: string): Promise<SiteDetail | null> {
     supabase,
     row.live_publication_id,
   );
-  const domains = await listSiteDomains(id);
+  const [domains, hasPendingChanges] = await Promise.all([
+    listSiteDomains(id),
+    resolveHasPendingChanges(supabase, {
+      siteId: id,
+      professionalId: row.professional_id,
+      siteUpdatedAt: row.updated_at,
+      publishedAt: publicationFields.published_at,
+      isLive: Boolean(publicationFields.live_publication_id),
+    }),
+  ]);
 
   return {
     id: row.id,
@@ -246,6 +255,7 @@ export async function getSite(id: string): Promise<SiteDetail | null> {
     live_publication_id: publicationFields.live_publication_id,
     published_version: publicationFields.published_version,
     published_at: publicationFields.published_at,
+    has_pending_changes: hasPendingChanges,
     created_at: row.created_at,
     updated_at: row.updated_at,
     domains,
@@ -373,6 +383,76 @@ async function resolvePublicationFields(
     published_version: publication?.version ?? null,
     published_at: publication?.published_at ?? null,
   };
+}
+
+async function resolveHasPendingChanges(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  input: {
+    siteId: string;
+    professionalId: string;
+    siteUpdatedAt: string;
+    publishedAt: string | null;
+    isLive: boolean;
+  },
+): Promise<boolean> {
+  if (!input.isLive || !input.publishedAt) {
+    return false;
+  }
+
+  const publishedMs = Date.parse(input.publishedAt);
+  if (Number.isNaN(publishedMs)) {
+    return false;
+  }
+
+  const candidates: number[] = [Date.parse(input.siteUpdatedAt)];
+
+  const [{ data: pages }, { data: posts }, { data: professional }] =
+    await Promise.all([
+      supabase
+        .from("site_pages")
+        .select("id, updated_at")
+        .eq("site_id", input.siteId),
+      supabase
+        .from("site_posts")
+        .select("updated_at")
+        .eq("site_id", input.siteId),
+      supabase
+        .from("professionals")
+        .select("updated_at")
+        .eq("id", input.professionalId)
+        .maybeSingle(),
+    ]);
+
+  for (const page of pages ?? []) {
+    candidates.push(Date.parse(String(page.updated_at)));
+  }
+  for (const post of posts ?? []) {
+    candidates.push(Date.parse(String(post.updated_at)));
+  }
+  if (professional?.updated_at) {
+    candidates.push(Date.parse(String(professional.updated_at)));
+  }
+
+  const pageIds = (pages ?? []).map((page) => String(page.id));
+  if (pageIds.length > 0) {
+    const { data: sections } = await supabase
+      .from("site_sections")
+      .select("updated_at")
+      .in("page_id", pageIds);
+    for (const section of sections ?? []) {
+      candidates.push(Date.parse(String(section.updated_at)));
+    }
+  }
+
+  const draftMs = candidates.reduce((max, value) => {
+    if (Number.isNaN(value)) {
+      return max;
+    }
+    return Math.max(max, value);
+  }, 0);
+
+  // 1,5s de folga evita falso positivo logo após publicar.
+  return draftMs > publishedMs + 1500;
 }
 
 async function loadPublicationsById(

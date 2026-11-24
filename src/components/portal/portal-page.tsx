@@ -41,7 +41,8 @@ export function PortalPageHeader({
       <div className="min-w-0">
         {backHref ? (
           <Link href={backHref} className="portal-back">
-            ← {backLabel}
+            <span aria-hidden="true">←</span>
+            {backLabel}
           </Link>
         ) : null}
         {kicker ? <p className="portal-kicker">{kicker}</p> : null}

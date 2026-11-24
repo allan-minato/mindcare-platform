@@ -1,11 +1,22 @@
 type StatusChipProps = {
   live?: boolean;
+  pending?: boolean;
   label?: string;
 };
 
-export function StatusChip({ live = false, label }: StatusChipProps) {
+export function StatusChip({
+  live = false,
+  pending = false,
+  label,
+}: StatusChipProps) {
+  const tone = pending
+    ? "portal-chip-pending"
+    : live
+      ? "portal-chip-live"
+      : "portal-chip-draft";
+
   return (
-    <span className={`portal-chip ${live ? "portal-chip-live" : "portal-chip-draft"}`}>
+    <span className={`portal-chip ${tone}`}>
       <span
         aria-hidden
         style={{
@@ -16,7 +27,12 @@ export function StatusChip({ live = false, label }: StatusChipProps) {
           opacity: 0.85,
         }}
       />
-      {label ?? (live ? "No ar" : "Rascunho")}
+      {label ??
+        (pending
+          ? "No ar · republicar"
+          : live
+            ? "No ar"
+            : "Rascunho")}
     </span>
   );
 }
