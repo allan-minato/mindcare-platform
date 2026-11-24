@@ -23,35 +23,46 @@ type PortalPageHeaderProps = {
   kicker?: string;
   title: ReactNode;
   lead?: ReactNode;
+  /** Status ou metadados sob o lead — não misturar com botões. */
+  meta?: ReactNode;
   backHref?: string;
   backLabel?: string;
+  /** Ações primárias (ex.: Ver prévia, Novo post). */
   actions?: ReactNode;
+  /** Navegação secundária (abas do site). */
+  nav?: ReactNode;
 };
 
 export function PortalPageHeader({
   kicker,
   title,
   lead,
+  meta,
   backHref,
   backLabel = "Voltar",
   actions,
+  nav,
 }: PortalPageHeaderProps) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <div className="min-w-0">
-        {backHref ? (
-          <Link href={backHref} className="portal-back">
-            <span aria-hidden="true">←</span>
-            {backLabel}
-          </Link>
+    <header className="portal-page-header">
+      <div className="portal-page-header-top">
+        <div className="portal-page-header-copy">
+          {backHref ? (
+            <Link href={backHref} className="portal-back">
+              <span aria-hidden="true">←</span>
+              {backLabel}
+            </Link>
+          ) : null}
+          {kicker ? <p className="portal-kicker">{kicker}</p> : null}
+          <h1 className="portal-title">{title}</h1>
+          {lead ? <p className="portal-lead">{lead}</p> : null}
+          {meta ? <div className="portal-page-header-meta">{meta}</div> : null}
+        </div>
+        {actions ? (
+          <div className="portal-page-header-actions">{actions}</div>
         ) : null}
-        {kicker ? <p className="portal-kicker">{kicker}</p> : null}
-        <h1 className="portal-title">{title}</h1>
-        {lead ? <p className="portal-lead">{lead}</p> : null}
       </div>
-      {actions ? (
-        <div className="flex flex-wrap items-center gap-2">{actions}</div>
-      ) : null}
-    </div>
+      {nav ? <div className="portal-page-header-nav">{nav}</div> : null}
+    </header>
   );
 }

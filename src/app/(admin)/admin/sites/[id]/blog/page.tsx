@@ -8,6 +8,7 @@ import {
   PortalPage,
   PortalPageHeader,
   PortalSection,
+  SiteWorkspaceNav,
   StatusChip,
 } from "@/components/portal";
 import { requireAdminProfile } from "@/lib/auth/admin";
@@ -64,6 +65,9 @@ export default async function AdminSiteBlogPage({ params }: PageProps) {
               Novo post
             </Link>
           </>
+        }
+        nav={
+          <SiteWorkspaceNav siteId={id} basePath="/admin" active="blog" />
         }
       />
 

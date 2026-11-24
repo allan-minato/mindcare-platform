@@ -8,6 +8,7 @@ import {
   PortalPage,
   PortalPageHeader,
   PortalSection,
+  SiteWorkspaceNav,
   StatusChip,
 } from "@/components/portal";
 import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
@@ -52,7 +53,7 @@ export default async function SiteDetailPage({ params }: PageProps) {
   const header = (
     <PortalPageHeader
       backHref="/admin/sites"
-      backLabel="Voltar"
+      backLabel="Voltar aos sites"
       kicker="Editor"
       title={site.name}
       lead={
@@ -69,46 +70,35 @@ export default async function SiteDetailPage({ params }: PageProps) {
           </Link>
         </>
       }
+      meta={
+        <StatusChip
+          live={isLive}
+          pending={hasPendingChanges}
+          label={
+            hasPendingChanges
+              ? `No ar · v${site.published_version ?? "—"} · republicar`
+              : isLive
+                ? `No ar · v${site.published_version ?? "—"} · atualizado`
+                : "Rascunho"
+          }
+        />
+      }
       actions={
-        <>
-          <StatusChip
-            live={isLive}
-            pending={hasPendingChanges}
-            label={
-              hasPendingChanges
-                ? `No ar · v${site.published_version ?? "—"} · republicar`
-                : isLive
-                  ? `No ar · v${site.published_version ?? "—"} · atualizado`
-                  : "Rascunho"
-            }
-          />
-          <Link
-            href={`/admin/sites/${site.id}/seo`}
-            className="portal-btn portal-btn-ghost"
-          >
-            SEO
-          </Link>
-          <Link
-            href={`/admin/sites/${site.id}/blog`}
-            className="portal-btn portal-btn-ghost"
-          >
-            Blog
-          </Link>
-          <Link
-            href={`/admin/sites/${site.id}/domains`}
-            className="portal-btn portal-btn-ghost"
-          >
-            Domínios
-          </Link>
-          <Link
-            href={previewHref}
-            target="_blank"
-            rel="noreferrer"
-            className="portal-btn portal-btn-primary"
-          >
-            Ver prévia
-          </Link>
-        </>
+        <Link
+          href={previewHref}
+          target="_blank"
+          rel="noreferrer"
+          className="portal-btn portal-btn-primary"
+        >
+          Ver prévia
+        </Link>
+      }
+      nav={
+        <SiteWorkspaceNav
+          siteId={site.id}
+          basePath="/admin"
+          active="editor"
+        />
       }
     />
   );

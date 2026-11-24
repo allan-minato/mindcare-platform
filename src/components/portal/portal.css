@@ -304,6 +304,77 @@ a.portal-btn-danger:hover {
   font-weight: 400;
 }
 
+.portal-page-header {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.portal-page-header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.25rem;
+}
+
+.portal-page-header-copy {
+  min-width: 0;
+  flex: 1 1 16rem;
+}
+
+.portal-page-header-meta {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.portal-page-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex: 0 1 auto;
+}
+
+.portal-page-header-nav {
+  padding-top: 0.15rem;
+  border-top: 1px solid var(--portal-line);
+}
+
+.portal-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.35rem;
+  margin: 0;
+  padding: 0;
+}
+
+.portal-subnav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 0.7rem 0.65rem;
+  border-radius: 0;
+  border-bottom: 3px solid transparent;
+  color: var(--portal-muted);
+  font-size: 0.9rem;
+  font-weight: 520;
+  text-decoration: none;
+  transition: color 0.15s ease, border-color 0.15s ease, font-weight 0.15s ease;
+}
+
+.portal-subnav-link:hover {
+  color: var(--portal-ink);
+}
+
+.portal-subnav-link[data-active="true"] {
+  color: var(--portal-ink);
+  border-bottom-color: var(--portal-ink);
+  font-weight: 700;
+}
+
 .portal-back {
   display: inline-flex;
   align-items: center;

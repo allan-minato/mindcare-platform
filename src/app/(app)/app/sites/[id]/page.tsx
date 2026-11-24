@@ -6,6 +6,7 @@ import { SiteSectionsEditor } from "@/app/(admin)/admin/sites/site-sections-edit
 import {
   PortalPage,
   PortalPageHeader,
+  SiteWorkspaceNav,
   StatusChip,
 } from "@/components/portal";
 import { requireProfessionalProfile } from "@/lib/auth/professional";
@@ -47,40 +48,31 @@ export default async function PortalSitePage({ params }: PageProps) {
       kicker="Editor"
       title={site.name}
       lead={`${site.slug} · ${templateLabel(site.template_key)}`}
+      meta={
+        <StatusChip
+          live={live}
+          pending={hasPendingChanges}
+          label={
+            hasPendingChanges
+              ? `No ar · v${site.published_version ?? "—"} · aguardando publicação`
+              : live
+                ? `No ar · v${site.published_version ?? "—"} · atualizado`
+                : "Rascunho"
+          }
+        />
+      }
       actions={
-        <>
-          <StatusChip
-            live={live}
-            pending={hasPendingChanges}
-            label={
-              hasPendingChanges
-                ? `No ar · v${site.published_version ?? "—"} · aguardando publicação`
-                : live
-                  ? `No ar · v${site.published_version ?? "—"} · atualizado`
-                  : "Rascunho"
-            }
-          />
-          <Link
-            href={`/app/sites/${site.id}/seo`}
-            className="portal-btn portal-btn-ghost"
-          >
-            SEO
-          </Link>
-          <Link
-            href={`/app/sites/${site.id}/blog`}
-            className="portal-btn portal-btn-ghost"
-          >
-            Blog
-          </Link>
-          <Link
-            href={previewHref}
-            target="_blank"
-            rel="noreferrer"
-            className="portal-btn portal-btn-primary"
-          >
-            Ver prévia
-          </Link>
-        </>
+        <Link
+          href={previewHref}
+          target="_blank"
+          rel="noreferrer"
+          className="portal-btn portal-btn-primary"
+        >
+          Ver prévia
+        </Link>
+      }
+      nav={
+        <SiteWorkspaceNav siteId={site.id} basePath="/app" active="editor" />
       }
     />
   );

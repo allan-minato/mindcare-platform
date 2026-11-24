@@ -8,6 +8,7 @@ import {
   PortalPage,
   PortalPageHeader,
   PortalSection,
+  SiteWorkspaceNav,
   StatusChip,
 } from "@/components/portal";
 import { SeoChecklist } from "@/components/seo/seo-checklist";
@@ -91,39 +92,29 @@ export default async function AdminSiteSeoPage({ params }: PageProps) {
         kicker="SEO"
         title="SEO e descoberta"
         lead={`${site.name} · busca, compartilhamento e sinais locais`}
+        meta={
+          <StatusChip
+            live={isLive}
+            pending={hasPendingChanges}
+            label={
+              hasPendingChanges
+                ? `No ar · v${site.published_version ?? "—"} · republicar`
+                : isLive
+                  ? `No ar · v${site.published_version ?? "—"} · atualizado`
+                  : "Rascunho"
+            }
+          />
+        }
         actions={
           <>
-            <StatusChip
-              live={isLive}
-              pending={hasPendingChanges}
-              label={
-                hasPendingChanges
-                  ? `No ar · v${site.published_version ?? "—"} · republicar`
-                  : isLive
-                    ? `No ar · v${site.published_version ?? "—"} · atualizado`
-                    : "Rascunho"
-              }
-            />
-            <Link
-              href={`/admin/sites/${id}`}
-              className={`portal-btn ${
-                hasPendingChanges ? "portal-btn-attention" : "portal-btn-ghost"
-              }`}
-            >
-              {hasPendingChanges ? "Republicar" : "Editor"}
-            </Link>
-            <Link
-              href={`/admin/sites/${id}/blog`}
-              className="portal-btn portal-btn-ghost"
-            >
-              Blog
-            </Link>
-            <Link
-              href={`/admin/sites/${id}/domains`}
-              className="portal-btn portal-btn-ghost"
-            >
-              Domínios
-            </Link>
+            {hasPendingChanges ? (
+              <Link
+                href={`/admin/sites/${id}`}
+                className="portal-btn portal-btn-attention"
+              >
+                Republicar
+              </Link>
+            ) : null}
             <Link
               href={`/preview/${id}`}
               target="_blank"
@@ -133,6 +124,9 @@ export default async function AdminSiteSeoPage({ params }: PageProps) {
               Ver prévia
             </Link>
           </>
+        }
+        nav={
+          <SiteWorkspaceNav siteId={id} basePath="/admin" active="seo" />
         }
       />
 

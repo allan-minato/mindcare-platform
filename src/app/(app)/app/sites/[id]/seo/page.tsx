@@ -8,6 +8,7 @@ import {
   PortalPage,
   PortalPageHeader,
   PortalSection,
+  SiteWorkspaceNav,
   StatusChip,
 } from "@/components/portal";
 import { SeoChecklist } from "@/components/seo/seo-checklist";
@@ -91,35 +92,30 @@ export default async function AppSiteSeoPage({ params }: PageProps) {
         kicker="SEO"
         title="SEO e descoberta"
         lead={`${site.name} · como o site aparece na busca e ao compartilhar`}
-        actions={
-          <>
-            <StatusChip
-              live={live}
-              pending={hasPendingChanges}
-              label={
-                hasPendingChanges
-                  ? `No ar · v${site.published_version ?? "—"} · aguardando publicação`
-                  : live
-                    ? `No ar · v${site.published_version ?? "—"} · atualizado`
-                    : "Rascunho"
-              }
-            />
-            <Link
-              href={`/app/sites/${id}/blog`}
-              className="portal-btn portal-btn-ghost"
-            >
-              Blog
-            </Link>
-            <Link
-              href={`/preview/${id}`}
-              target="_blank"
-              rel="noreferrer"
-              className="portal-btn portal-btn-primary"
-            >
-              Ver prévia
-            </Link>
-          </>
+        meta={
+          <StatusChip
+            live={live}
+            pending={hasPendingChanges}
+            label={
+              hasPendingChanges
+                ? `No ar · v${site.published_version ?? "—"} · aguardando publicação`
+                : live
+                  ? `No ar · v${site.published_version ?? "—"} · atualizado`
+                  : "Rascunho"
+            }
+          />
         }
+        actions={
+          <Link
+            href={`/preview/${id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="portal-btn portal-btn-primary"
+          >
+            Ver prévia
+          </Link>
+        }
+        nav={<SiteWorkspaceNav siteId={id} basePath="/app" active="seo" />}
       />
 
       <SeoPageIntro publishNote="a equipe MindCare precisa publicar de novo para ir ao ar." />

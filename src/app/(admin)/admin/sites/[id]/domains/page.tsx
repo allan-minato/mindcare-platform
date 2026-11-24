@@ -7,6 +7,7 @@ import {
   PortalPage,
   PortalPageHeader,
   PortalSection,
+  SiteWorkspaceNav,
   StatusChip,
 } from "@/components/portal";
 import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
@@ -48,40 +49,31 @@ export default async function AdminSiteDomainsPage({ params }: PageProps) {
         kicker="Domínios"
         title="Domínios e URL pública"
         lead={`${site.name} · host da plataforma e domínio do cliente`}
+        meta={
+          <StatusChip
+            live={isLive}
+            pending={hasPendingChanges}
+            label={
+              hasPendingChanges
+                ? `No ar · v${site.published_version ?? "—"} · republicar`
+                : isLive
+                  ? `No ar · v${site.published_version ?? "—"} · atualizado`
+                  : "Rascunho"
+            }
+          />
+        }
         actions={
-          <>
-            <StatusChip
-              live={isLive}
-              pending={hasPendingChanges}
-              label={
-                hasPendingChanges
-                  ? `No ar · v${site.published_version ?? "—"} · republicar`
-                  : isLive
-                    ? `No ar · v${site.published_version ?? "—"} · atualizado`
-                    : "Rascunho"
-              }
-            />
-            <Link
-              href={`/admin/sites/${id}/seo`}
-              className="portal-btn portal-btn-ghost"
-            >
-              SEO
-            </Link>
-            <Link
-              href={`/admin/sites/${id}/blog`}
-              className="portal-btn portal-btn-ghost"
-            >
-              Blog
-            </Link>
-            <Link
-              href={`/preview/${id}`}
-              target="_blank"
-              rel="noreferrer"
-              className="portal-btn portal-btn-primary"
-            >
-              Ver prévia
-            </Link>
-          </>
+          <Link
+            href={`/preview/${id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="portal-btn portal-btn-primary"
+          >
+            Ver prévia
+          </Link>
+        }
+        nav={
+          <SiteWorkspaceNav siteId={id} basePath="/admin" active="domains" />
         }
       />
 
