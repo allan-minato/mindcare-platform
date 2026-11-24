@@ -80,6 +80,12 @@ export default async function AdminSiteSeoPage({ params }: PageProps) {
     hasVerifiedDomain,
     isLive,
     hasPendingChanges,
+    resolve: {
+      editor: `/admin/sites/${id}`,
+      blog: `/admin/sites/${id}/blog`,
+      domains: `/admin/sites/${id}/domains`,
+      professional: `/admin/professionals/${site.professional_id}`,
+    },
   });
   const saveSeo = updateSiteSeo.bind(null, site.id, "admin");
 

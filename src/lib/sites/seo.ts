@@ -414,12 +414,21 @@ export type SeoChecklistItem = {
   ok: boolean;
   hint?: string;
   group: SeoChecklistGroup;
+  /** Onde resolver quando incompleto (âncora na própria SEO ou outra aba). */
+  resolveHref?: string;
 };
 
 export type SeoChecklistSectionInput = {
   module_key: string;
   is_visible: boolean;
   content: Record<string, unknown>;
+};
+
+export type SeoChecklistResolvePaths = {
+  editor: string;
+  blog: string;
+  domains?: string | null;
+  professional?: string | null;
 };
 
 export function buildSeoChecklist(input: {
@@ -429,6 +438,7 @@ export function buildSeoChecklist(input: {
   hasVerifiedDomain: boolean;
   isLive: boolean;
   hasPendingChanges?: boolean;
+  resolve?: SeoChecklistResolvePaths;
 }): SeoChecklistItem[] {
   const fields = siteSeoFromRecord(input.seo);
   const posts = input.document?.blog.posts ?? [];
@@ -446,6 +456,7 @@ export function buildSeoChecklist(input: {
     serviceScope === "online" || serviceScope === "hybrid" || hasLocality;
   const socialCount = input.document ? socialProfileUrls(input.document).length : 0;
   const faqState = resolveFaqChecklist(input.sections, input.document);
+  const paths = input.resolve;
 
   return [
     {
@@ -456,6 +467,7 @@ export function buildSeoChecklist(input: {
         ? undefined
         : "Sem título customizado, o Google usa o nome do profissional.",
       group: "basico",
+      resolveHref: paths ? "#seo-title" : undefined,
     },
     {
       id: "description",
@@ -465,6 +477,7 @@ export function buildSeoChecklist(input: {
         ? undefined
         : "Adicione uma frase clara sobre o atendimento (até 170 caracteres).",
       group: "basico",
+      resolveHref: paths ? "#seo-description" : undefined,
     },
     {
       id: "og",
@@ -472,6 +485,7 @@ export function buildSeoChecklist(input: {
       ok: Boolean(fields.og_image_url || input.document?.professional.photo_url),
       hint: "Usada no WhatsApp e redes. Sem ela, cai na foto do perfil.",
       group: "basico",
+      resolveHref: paths ? "#seo-og" : undefined,
     },
     {
       id: "live",
@@ -485,6 +499,7 @@ export function buildSeoChecklist(input: {
           ? undefined
           : "SEO público só vale depois que a equipe publica o snapshot.",
       group: "basico",
+      resolveHref: paths?.editor,
     },
     {
       id: "domain",
@@ -494,6 +509,7 @@ export function buildSeoChecklist(input: {
         ? undefined
         : "Sem domínio próprio, o canonical usa a URL da plataforma.",
       group: "basico",
+      resolveHref: paths?.domains || undefined,
     },
     {
       id: "locality",
@@ -508,6 +524,7 @@ export function buildSeoChecklist(input: {
           : undefined
         : "Para presencial, informe a cidade. Para online, escolha “Só online” no modo de atendimento.",
       group: "descoberta",
+      resolveHref: paths ? "#seo-locality" : undefined,
     },
     {
       id: "faq",
@@ -515,6 +532,7 @@ export function buildSeoChecklist(input: {
       ok: faqState.ok,
       hint: faqState.hint,
       group: "descoberta",
+      resolveHref: paths?.editor,
     },
     {
       id: "social",
@@ -525,6 +543,7 @@ export function buildSeoChecklist(input: {
           ? undefined
           : "Instagram/LinkedIn no perfil reforçam a entidade do profissional na web.",
       group: "descoberta",
+      resolveHref: paths?.professional || undefined,
     },
     {
       id: "gmb",
@@ -534,6 +553,7 @@ export function buildSeoChecklist(input: {
         ? undefined
         : "Opcional, mas forte para aparecer em recomendações locais.",
       group: "descoberta",
+      resolveHref: paths ? "#seo-gmb" : undefined,
     },
     {
       id: "posts-excerpt",
@@ -544,6 +564,7 @@ export function buildSeoChecklist(input: {
           ? `${postsWithoutExcerpt.length} post(s) sem resumo.`
           : undefined,
       group: "conteudo",
+      resolveHref: paths?.blog,
     },
     {
       id: "posts-cover",
@@ -554,6 +575,7 @@ export function buildSeoChecklist(input: {
           ? `${postsWithoutCover.length} post(s) sem imagem de capa.`
           : undefined,
       group: "conteudo",
+      resolveHref: paths?.blog,
     },
   ];
 }

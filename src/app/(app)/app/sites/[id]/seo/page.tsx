@@ -80,6 +80,11 @@ export default async function AppSiteSeoPage({ params }: PageProps) {
     hasVerifiedDomain,
     isLive: live,
     hasPendingChanges,
+    resolve: {
+      editor: `/app/sites/${id}`,
+      blog: `/app/sites/${id}/blog`,
+      professional: "/app/profile",
+    },
   });
   const saveSeo = updateSiteSeo.bind(null, site.id, "app");
 

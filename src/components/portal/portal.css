@@ -844,6 +844,16 @@ a.portal-btn-danger:hover {
   gap: 1.35rem;
 }
 
+#seo-title,
+#seo-description,
+#seo-og,
+#seo-locality,
+#seo-region,
+#seo-gmb,
+#seo-gsc {
+  scroll-margin-top: 6.5rem;
+}
+
 .seo-field {
   display: grid;
   gap: 0.45rem;
@@ -1451,13 +1461,62 @@ a.portal-btn-danger:hover {
 
 .seo-check-item {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.7rem;
-  padding: 0.75rem 1rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.7rem 0.85rem;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  transition: background 0.15s ease;
 }
 
 .seo-check-item + .seo-check-item {
   border-top: 1px solid var(--portal-line);
+}
+
+/* Padrão de auditorias: ok em verde suave, pendente em destaque + ação à direita */
+.seo-check-item.is-ok {
+  background: rgba(46, 125, 74, 0.16);
+}
+
+.seo-check-item.is-todo {
+  background: rgba(166, 134, 85, 0.07);
+}
+
+.seo-check-item.is-todo:hover {
+  background: rgba(166, 134, 85, 0.12);
+}
+
+.seo-check-resolve {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: center;
+  flex-shrink: 0;
+  padding: 0.4rem 0.75rem;
+  border: 1.5px solid rgba(20, 18, 16, 0.55);
+  border-radius: 8px;
+  background: var(--portal-paper-elevated);
+  color: var(--portal-ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.seo-check-resolve:hover {
+  background: var(--portal-ink);
+  border-color: var(--portal-ink);
+  color: var(--portal-paper);
+}
+
+.seo-check-resolve span {
+  font-size: 0.95em;
+  line-height: 1;
 }
 
 .seo-check-mark {

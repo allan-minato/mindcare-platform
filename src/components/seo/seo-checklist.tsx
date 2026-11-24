@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type {
   SeoChecklistGroup,
   SeoChecklistItem,
@@ -97,6 +99,15 @@ export function SeoChecklist({ items }: SeoChecklistProps) {
                         <p className="seo-check-item-hint">Pronto.</p>
                       ) : null}
                     </div>
+                    {!item.ok && item.resolveHref ? (
+                      <Link
+                        href={item.resolveHref}
+                        className="seo-check-resolve"
+                      >
+                        Resolver
+                        <span aria-hidden="true">→</span>
+                      </Link>
+                    ) : null}
                   </li>
                 ))}
               </ul>
