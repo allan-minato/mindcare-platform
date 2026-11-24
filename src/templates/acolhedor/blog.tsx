@@ -73,7 +73,7 @@ export function AcolhedorBlogList({
                   <div className="acolhedor-post-card-media" aria-hidden="true">
                     {post.cover_image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={post.cover_image_url} alt="" />
+                      <img src={post.cover_image_url} alt={post.title} />
                     ) : (
                       <span>{post.title}</span>
                     )}
@@ -181,7 +181,7 @@ export function AcolhedorBlogPost({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={post.cover_image_url}
-              alt=""
+              alt={post.title}
               className="acolhedor-blog-cover"
             />
           ) : (

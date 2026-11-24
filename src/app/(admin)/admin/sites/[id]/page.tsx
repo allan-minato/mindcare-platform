@@ -2,19 +2,26 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { updateSiteSeo } from "@/app/(admin)/admin/sites/seo-actions";
 import { SiteDomainsPanel } from "@/app/(admin)/admin/sites/site-domains-panel";
 import { SitePublishControls } from "@/app/(admin)/admin/sites/site-publish-controls";
 import { SiteSectionsEditor } from "@/app/(admin)/admin/sites/site-sections-editor";
+import { SiteSeoForm } from "@/app/(admin)/admin/sites/site-seo-form";
 import {
   PortalPage,
   PortalPageHeader,
   PortalSection,
   StatusChip,
 } from "@/components/portal";
+import { SeoChecklist } from "@/components/seo/seo-checklist";
 import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
 import { publicSiteUrl } from "@/lib/sites/host";
 import { getPreviewDocument } from "@/lib/sites/preview";
 import { getSite } from "@/lib/sites/queries";
+import {
+  buildSeoChecklist,
+  siteSeoFromRecord,
+} from "@/lib/sites/seo";
 import { templateLabel } from "@/lib/templates/registry";
 
 export const instant = false;
@@ -46,6 +53,17 @@ export default async function SiteDetailPage({ params }: PageProps) {
     ? `No ar · v${site.published_version ?? "—"} · ${formatPublishedAt(site.published_at)}`
     : "Rascunho — ainda não está no ar";
   const previewHref = `/preview/${site.id}`;
+  const hasVerifiedDomain = site.domains.some(
+    (domain) => domain.verification_status === "verified",
+  );
+  const seoFields = siteSeoFromRecord(site.seo);
+  const seoChecklist = buildSeoChecklist({
+    seo: site.seo,
+    document: baseDocument,
+    hasVerifiedDomain,
+    isLive,
+  });
+  const saveSeo = updateSiteSeo.bind(null, site.id, "admin");
 
   const header = (
     <PortalPageHeader
@@ -147,6 +165,17 @@ export default async function SiteDetailPage({ params }: PageProps) {
           platformUrl={publicSiteUrl(site.slug)}
           isLive={isLive}
         />
+      </PortalSection>
+
+      <PortalSection
+        title="SEO"
+        description="Título, descrição e imagem usados no Google e no compartilhamento. Entram no ar na próxima publicação."
+      >
+        <SiteSeoForm action={saveSeo} initial={seoFields} />
+      </PortalSection>
+
+      <PortalSection title="Checklist SEO">
+        <SeoChecklist items={seoChecklist} />
       </PortalSection>
     </>
   );

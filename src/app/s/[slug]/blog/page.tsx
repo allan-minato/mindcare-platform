@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { publicSiteBasePath, publicSiteUrl } from "@/lib/sites/host";
+import { publicSiteBasePath } from "@/lib/sites/host";
+import {
+  buildPageMetadata,
+  publishedCanonicalUrl,
+  seoFromDocument,
+} from "@/lib/sites/seo";
 import { getPublishedBySlug } from "@/lib/tenant";
 import { BlogListRenderer } from "@/templates/blog/render";
 
@@ -19,13 +24,18 @@ export async function generateMetadata({
   if (!published?.document.blog.enabled) {
     return { title: "Blog" };
   }
-  return {
-    title: published.document.blog.title,
-    description: published.document.blog.intro || undefined,
-    alternates: {
-      canonical: `${publicSiteUrl(published.slug).replace(/\/$/, "")}/blog`,
-    },
-  };
+  const siteSeo = seoFromDocument(published.document);
+  const title = published.document.blog.title;
+  const description =
+    published.document.blog.intro.trim() || siteSeo.description;
+
+  return buildPageMetadata({
+    title,
+    description,
+    canonical: publishedCanonicalUrl(published, "/blog"),
+    ogImage: siteSeo.ogImage,
+    googleSiteVerification: siteSeo.googleSiteVerification,
+  });
 }
 
 export default async function PathPublicBlogPage({ params }: PageProps) {

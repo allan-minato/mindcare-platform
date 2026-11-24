@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { publicSiteOrigin } from "@/lib/sites/host";
+import { SiteJsonLd } from "@/components/seo/json-ld";
 import {
-  getPublishedByHost,
+  buildPageMetadata,
+  publishedCanonicalUrl,
   seoFromDocument,
-} from "@/lib/tenant";
+} from "@/lib/sites/seo";
+import { getPublishedByHost } from "@/lib/tenant";
 import { TemplateRenderer } from "@/templates/render";
 
 export const instant = false;
@@ -13,14 +15,6 @@ export const instant = false;
 type PageProps = {
   params: Promise<{ host: string }>;
 };
-
-function canonicalForHost(host: string): string {
-  const normalized = host.trim().toLowerCase();
-  if (normalized.endsWith(".localhost") || normalized === "localhost") {
-    return `http://${normalized}:3000/`;
-  }
-  return `${publicSiteOrigin(normalized)}/`;
-}
 
 export async function generateMetadata({
   params,
@@ -31,15 +25,14 @@ export async function generateMetadata({
     return { title: "Site não encontrado" };
   }
 
-  const { title, description } = seoFromDocument(published.document);
-
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: canonicalForHost(host),
-    },
-  };
+  const seo = seoFromDocument(published.document);
+  return buildPageMetadata({
+    title: seo.title,
+    description: seo.description,
+    canonical: publishedCanonicalUrl(published, "/"),
+    ogImage: seo.ogImage,
+    googleSiteVerification: seo.googleSiteVerification,
+  });
 }
 
 export default async function PublicSitePage({ params }: PageProps) {
@@ -50,7 +43,12 @@ export default async function PublicSitePage({ params }: PageProps) {
     notFound();
   }
 
+  const canonical = publishedCanonicalUrl(published, "/");
+
   return (
-    <TemplateRenderer document={published.document} mode="public" />
+    <>
+      <SiteJsonLd document={published.document} url={canonical} />
+      <TemplateRenderer document={published.document} mode="public" />
+    </>
   );
 }

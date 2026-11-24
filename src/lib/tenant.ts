@@ -110,28 +110,7 @@ export async function getPublishedByHost(
   return parsePublishedPayload(data, slug ?? "");
 }
 
-export function seoFromDocument(document: SiteDocument): {
-  title: string;
-  description: string;
-} {
-  const seo = document.site.seo ?? {};
-  const name =
-    document.professional.professional_name?.trim() ||
-    document.professional.full_name?.trim() ||
-    "Profissional";
-
-  const title =
-    typeof seo.title === "string" && seo.title.trim().length > 0
-      ? seo.title.trim()
-      : name;
-
-  const description =
-    typeof seo.description === "string" && seo.description.trim().length > 0
-      ? seo.description.trim()
-      : `Atendimento clínico com ${name}.`;
-
-  return { title, description };
-}
+export { seoFromDocument } from "@/lib/sites/seo";
 
 export {
   extractSlugFromHost,

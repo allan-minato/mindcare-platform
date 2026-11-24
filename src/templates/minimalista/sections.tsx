@@ -84,7 +84,7 @@ function HeroSection({ section, document }: TemplateSectionProps) {
         ) : null}
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt="" className="minimalista-hero-media" />
+          <img src={image} alt={hero.name} className="minimalista-hero-media" />
         ) : null}
       </div>
     </section>
@@ -136,7 +136,7 @@ function AboutSection({ section }: TemplateSectionProps) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={content.image_url}
-            alt=""
+            alt={content.title?.trim() || "Sobre o profissional"}
             className="minimalista-hero-media"
           />
         ) : null}

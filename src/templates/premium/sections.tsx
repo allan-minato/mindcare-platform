@@ -138,7 +138,11 @@ function AboutSection({ section }: TemplateSectionProps) {
         </div>
         {content.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={content.image_url} alt="" className="premium-media" />
+          <img
+            src={content.image_url}
+            alt={content.title?.trim() || "Sobre o profissional"}
+            className="premium-media"
+          />
         ) : null}
       </div>
     </section>

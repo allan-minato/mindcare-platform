@@ -128,7 +128,7 @@ function HeroSection({ section, document }: SectionProps) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl}
-              alt={content.image_url ? "" : name}
+              alt={name}
               className="acolhedor-media"
             />
           </div>
@@ -176,7 +176,7 @@ function AboutSection({ section }: SectionProps) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={content.image_url}
-              alt=""
+              alt={content.title?.trim() || "Sobre o profissional"}
               className="acolhedor-media"
             />
           </div>

@@ -2,15 +2,23 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { updateSiteSeo } from "@/app/(admin)/admin/sites/seo-actions";
 import { SiteSectionsEditor } from "@/app/(admin)/admin/sites/site-sections-editor";
+import { SiteSeoForm } from "@/app/(admin)/admin/sites/site-seo-form";
 import {
   PortalPage,
   PortalPageHeader,
+  PortalSection,
   StatusChip,
 } from "@/components/portal";
+import { SeoChecklist } from "@/components/seo/seo-checklist";
 import { requireProfessionalProfile } from "@/lib/auth/professional";
 import { getPreviewDocument } from "@/lib/sites/preview";
 import { getSite } from "@/lib/sites/queries";
+import {
+  buildSeoChecklist,
+  siteSeoFromRecord,
+} from "@/lib/sites/seo";
 import { templateLabel } from "@/lib/templates/registry";
 
 export const instant = false;
@@ -38,6 +46,17 @@ export default async function PortalSitePage({ params }: PageProps) {
   const sections = site.home_page?.sections ?? [];
   const previewHref = `/preview/${site.id}`;
   const live = Boolean(site.live_publication_id);
+  const hasVerifiedDomain = site.domains.some(
+    (domain) => domain.verification_status === "verified",
+  );
+  const seoFields = siteSeoFromRecord(site.seo);
+  const seoChecklist = buildSeoChecklist({
+    seo: site.seo,
+    document: baseDocument,
+    hasVerifiedDomain,
+    isLive: live,
+  });
+  const saveSeo = updateSiteSeo.bind(null, site.id, "app");
 
   const header = (
     <PortalPageHeader
@@ -74,12 +93,23 @@ export default async function PortalSitePage({ params }: PageProps) {
   );
 
   const aside = (
-    <section className="grid gap-1">
-      <p className="portal-hint" style={{ margin: 0, fontSize: "0.9rem" }}>
-        Edite textos, ordem e visibilidade com prévia ao vivo. Para colocar no
-        ar, a equipe MindCare publica o site.
-      </p>
-    </section>
+    <>
+      <section className="grid gap-1">
+        <p className="portal-hint" style={{ margin: 0, fontSize: "0.9rem" }}>
+          Edite textos, ordem e visibilidade com prévia ao vivo. Para colocar no
+          ar, a equipe MindCare publica o site.
+        </p>
+      </section>
+      <PortalSection
+        title="SEO"
+        description="Como o site aparece no Google e ao compartilhar o link."
+      >
+        <SiteSeoForm action={saveSeo} initial={seoFields} />
+      </PortalSection>
+      <PortalSection title="Checklist SEO">
+        <SeoChecklist items={seoChecklist} />
+      </PortalSection>
+    </>
   );
 
   if (!site.home_page) {

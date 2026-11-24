@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { ArticleJsonLd } from "@/components/seo/json-ld";
 import { findBlogPost } from "@/lib/sites/document";
-import { publicSiteOrigin } from "@/lib/sites/host";
+import {
+  buildPageMetadata,
+  postSeoMetadata,
+  publishedCanonicalUrl,
+  seoFromDocument,
+} from "@/lib/sites/seo";
 import { getPublishedByHost } from "@/lib/tenant";
 import { BlogPostRenderer } from "@/templates/blog/render";
 
@@ -24,22 +30,17 @@ export async function generateMetadata({
   if (!post) {
     return { title: "Artigo não encontrado" };
   }
-  const seoTitle =
-    typeof post.seo.title === "string" && post.seo.title.trim()
-      ? post.seo.title
-      : post.title;
-  const seoDescription =
-    typeof post.seo.description === "string" && post.seo.description.trim()
-      ? post.seo.description
-      : post.excerpt || undefined;
+  const siteSeo = seoFromDocument(published.document);
+  const meta = postSeoMetadata(published.document, post);
 
-  return {
-    title: seoTitle,
-    description: seoDescription,
-    alternates: {
-      canonical: `${canonicalBase(host)}/blog/${post.slug}`,
-    },
-  };
+  return buildPageMetadata({
+    title: meta.title,
+    description: meta.description,
+    canonical: publishedCanonicalUrl(published, `/blog/${post.slug}`),
+    ogImage: meta.ogImage,
+    googleSiteVerification: siteSeo.googleSiteVerification,
+    type: "article",
+  });
 }
 
 export default async function PublicBlogPostPage({ params }: PageProps) {
@@ -53,19 +54,20 @@ export default async function PublicBlogPostPage({ params }: PageProps) {
     notFound();
   }
 
-  return (
-    <BlogPostRenderer
-      document={published.document}
-      post={post}
-      mode="public"
-    />
-  );
-}
+  const canonical = publishedCanonicalUrl(published, `/blog/${post.slug}`);
 
-function canonicalBase(host: string): string {
-  const normalized = host.trim().toLowerCase();
-  if (normalized.endsWith(".localhost") || normalized === "localhost") {
-    return `http://${normalized}:3000`;
-  }
-  return publicSiteOrigin(normalized);
+  return (
+    <>
+      <ArticleJsonLd
+        document={published.document}
+        post={post}
+        url={canonical}
+      />
+      <BlogPostRenderer
+        document={published.document}
+        post={post}
+        mode="public"
+      />
+    </>
+  );
 }

@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { publicSiteBasePath, publicSiteUrl } from "@/lib/sites/host";
-import { getPublishedBySlug, seoFromDocument } from "@/lib/tenant";
+import { SiteJsonLd } from "@/components/seo/json-ld";
+import { publicSiteBasePath } from "@/lib/sites/host";
+import {
+  buildPageMetadata,
+  publishedCanonicalUrl,
+  seoFromDocument,
+} from "@/lib/sites/seo";
+import { getPublishedBySlug } from "@/lib/tenant";
 import { TemplateRenderer } from "@/templates/render";
 
 export const instant = false;
@@ -20,15 +26,14 @@ export async function generateMetadata({
     return { title: "Site não encontrado" };
   }
 
-  const { title, description } = seoFromDocument(published.document);
-
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: publicSiteUrl(published.slug),
-    },
-  };
+  const seo = seoFromDocument(published.document);
+  return buildPageMetadata({
+    title: seo.title,
+    description: seo.description,
+    canonical: publishedCanonicalUrl(published, "/"),
+    ogImage: seo.ogImage,
+    googleSiteVerification: seo.googleSiteVerification,
+  });
 }
 
 export default async function PathPublicSitePage({ params }: PageProps) {
@@ -39,11 +44,16 @@ export default async function PathPublicSitePage({ params }: PageProps) {
     notFound();
   }
 
+  const canonical = publishedCanonicalUrl(published, "/");
+
   return (
-    <TemplateRenderer
-      document={published.document}
-      mode="public"
-      basePath={publicSiteBasePath(published.slug)}
-    />
+    <>
+      <SiteJsonLd document={published.document} url={canonical} />
+      <TemplateRenderer
+        document={published.document}
+        mode="public"
+        basePath={publicSiteBasePath(published.slug)}
+      />
+    </>
   );
 }
