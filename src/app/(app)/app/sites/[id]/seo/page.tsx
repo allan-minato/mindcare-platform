@@ -163,8 +163,8 @@ export default async function AppSiteSeoPage({ params }: PageProps) {
       </PortalSection>
 
       <PortalSection
-        title="Rastreamento e testes"
-        description="Arquivos que o Google lê e atalhos para validar o site publicado."
+        title="Conferir no Google"
+        description="Só para validar o site publicado: abrir robots/sitemap e atalhos oficiais. A edição do SEO continua nos metadados acima."
       >
         <SeoCrawlLinks publicOrigin={publicOrigin} isLive={live} />
       </PortalSection>
