@@ -19,6 +19,7 @@ import { templateLabel } from "@/lib/templates/registry";
 
 export const instant = false;
 
+
 export const metadata: Metadata = {
   title: "Site · MindCare",
 };
