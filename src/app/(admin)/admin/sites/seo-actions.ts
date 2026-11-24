@@ -68,6 +68,7 @@ export async function updateSiteSeo(
 
   const base = portal === "admin" ? "/admin/sites" : "/app/sites";
   revalidatePath(`${base}/${siteId}`);
+  revalidatePath(`${base}/${siteId}/seo`);
   revalidatePath(`/preview/${siteId}`);
   return { saved: true };
 }
