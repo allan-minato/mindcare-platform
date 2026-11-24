@@ -53,6 +53,11 @@ export default async function PortalSitePage({ params }: PageProps) {
   const seoChecklist = buildSeoChecklist({
     seo: site.seo,
     document: baseDocument,
+    sections: sections.map((section) => ({
+      module_key: section.module_key,
+      is_visible: section.is_visible,
+      content: section.content,
+    })),
     hasVerifiedDomain,
     isLive: live,
   });

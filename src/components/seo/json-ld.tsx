@@ -3,7 +3,12 @@ import {
   type SiteDocument,
   type SiteDocumentBlogPost,
 } from "@/lib/sites/document";
-import { postSeoMetadata, seoFromDocument } from "@/lib/sites/seo";
+import {
+  documentFaqItems,
+  postSeoMetadata,
+  seoFromDocument,
+  socialProfileUrls,
+} from "@/lib/sites/seo";
 
 function JsonLdScript({ data }: { data: Record<string, unknown> }) {
   return (
@@ -24,34 +29,114 @@ export function SiteJsonLd({
   const seo = seoFromDocument(document);
   const name = professionalDisplayName(document.professional);
   const pro = document.professional;
+  const sameAs = [
+    ...socialProfileUrls(document),
+    ...(seo.googleBusinessUrl ? [seo.googleBusinessUrl] : []),
+  ];
+  const faqItems = documentFaqItems(document);
 
-  const data: Record<string, unknown> = {
-    "@context": "https://schema.org",
+  const person: Record<string, unknown> = {
+    "@type": "Person",
+    "@id": `${url}#person`,
+    name,
+    url,
+  };
+  if (seo.ogImage || pro.photo_url) {
+    person.image = seo.ogImage || pro.photo_url;
+  }
+  if (pro.specialty) {
+    person.jobTitle = pro.specialty;
+  }
+  if (pro.email) {
+    person.email = pro.email;
+  }
+  if (pro.phone) {
+    person.telephone = pro.phone;
+  }
+  if (sameAs.length > 0) {
+    person.sameAs = sameAs;
+  }
+
+  const service: Record<string, unknown> = {
     "@type": "ProfessionalService",
+    "@id": `${url}#service`,
     name,
     url,
     description: seo.description,
+    provider: { "@id": `${url}#person` },
   };
 
   if (seo.ogImage) {
-    data.image = seo.ogImage;
+    service.image = seo.ogImage;
   }
   if (pro.phone) {
-    data.telephone = pro.phone;
+    service.telephone = pro.phone;
   }
   if (pro.email) {
-    data.email = pro.email;
+    service.email = pro.email;
   }
   if (pro.specialty) {
-    data.knowsAbout = pro.specialty;
+    service.knowsAbout = pro.specialty;
+  }
+  if (sameAs.length > 0) {
+    service.sameAs = sameAs;
   }
 
-  const address = officeAddress(pro.office_address);
+  const address = officeAddress(pro.office_address, seo.locality, seo.region);
   if (address) {
-    data.address = address;
+    service.address = address;
+    person.address = address;
   }
 
-  return <JsonLdScript data={data} />;
+  if (seo.locality) {
+    service.areaServed = {
+      "@type": "City",
+      name: seo.locality,
+      ...(seo.region
+        ? {
+            containedInPlace: {
+              "@type": "State",
+              name: seo.region,
+            },
+          }
+        : {}),
+    };
+  }
+
+  const modes = pro.attendance_modes?.filter(Boolean) ?? [];
+  if (modes.length > 0) {
+    service.availableChannel = modes.map((mode) => ({
+      "@type": "ServiceChannel",
+      serviceType: mode === "online" ? "Online" : "Presencial",
+      ...(mode === "online" ? { serviceUrl: url } : {}),
+    }));
+  }
+
+  const graph: Record<string, unknown>[] = [person, service];
+
+  if (faqItems.length > 0) {
+    graph.push({
+      "@type": "FAQPage",
+      "@id": `${url}#faq`,
+      mainEntity: faqItems.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.answer,
+        },
+      })),
+    });
+  }
+
+  return (
+    <JsonLdScript
+      data={{
+        "@context": "https://schema.org",
+        "@graph": graph,
+      }}
+    />
+  );
 }
 
 export function ArticleJsonLd({
@@ -65,6 +150,7 @@ export function ArticleJsonLd({
 }) {
   const meta = postSeoMetadata(document, post);
   const author = professionalDisplayName(document.professional);
+  const seo = seoFromDocument(document);
 
   const data: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -72,9 +158,11 @@ export function ArticleJsonLd({
     headline: meta.title,
     description: meta.description,
     url,
+    inLanguage: "pt-BR",
     author: {
       "@type": "Person",
       name: author,
+      ...(seo.locality ? { address: { "@type": "PostalAddress", addressLocality: seo.locality } } : {}),
     },
   };
 
@@ -88,14 +176,18 @@ export function ArticleJsonLd({
   return <JsonLdScript data={data} />;
 }
 
-function officeAddress(value: unknown): Record<string, unknown> | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-  const raw = value as Record<string, unknown>;
+function officeAddress(
+  value: unknown,
+  localityFallback: string | null,
+  regionFallback: string | null,
+): Record<string, unknown> | null {
+  const raw =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
   const street = stringField(raw.street ?? raw.line1 ?? raw.address);
-  const city = stringField(raw.city);
-  const region = stringField(raw.state ?? raw.region);
+  const city = stringField(raw.city) ?? localityFallback;
+  const region = stringField(raw.state ?? raw.region) ?? regionFallback;
   const postal = stringField(raw.postal_code ?? raw.zip);
   if (!street && !city) {
     return null;

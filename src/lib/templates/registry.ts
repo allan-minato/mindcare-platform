@@ -21,7 +21,7 @@ export const sharedSectionBlueprint: readonly SectionBlueprint[] = [
   { section_key: "para-quem", module_key: "audience", is_visible: true },
   { section_key: "contato", module_key: "contact", is_visible: true },
   { section_key: "formacao", module_key: "education", is_visible: false },
-  { section_key: "faq", module_key: "faq", is_visible: false },
+  { section_key: "faq", module_key: "faq", is_visible: true },
 ] as const;
 
 export function isTemplateKey(value: string): value is TemplateKey {

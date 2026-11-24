@@ -10,6 +10,7 @@ import {
   publicSiteOrigin,
   publicSiteUrl,
 } from "@/lib/sites/host";
+import { faqContentSchema } from "@/modules/schemas";
 
 type PublishedCanonicalInput = {
   slug: string;
@@ -25,7 +26,7 @@ const optionalHttpsUrl = z
   .string()
   .transform(emptyToNull)
   .refine((value) => value === null || /^https:\/\//i.test(value), {
-    message: "A URL da imagem precisa começar com https://.",
+    message: "A URL precisa começar com https://.",
   });
 
 export const siteSeoFormSchema = z.object({
@@ -46,12 +47,22 @@ export const siteSeoFormSchema = z.object({
     .max(120)
     .transform(emptyToNull)
     .refine(
-      (value) =>
-        value === null || /^[A-Za-z0-9_-]+$/.test(value),
+      (value) => value === null || /^[A-Za-z0-9_-]+$/.test(value),
       {
         message: "Use só o código de verificação do Google (sem tags HTML).",
       },
     ),
+  locality: z
+    .string()
+    .trim()
+    .max(80, "Cidade com no máximo 80 caracteres.")
+    .transform(emptyToNull),
+  region: z
+    .string()
+    .trim()
+    .max(40, "Estado/UF com no máximo 40 caracteres.")
+    .transform(emptyToNull),
+  google_business_url: optionalHttpsUrl,
 });
 
 export type SiteSeoFormValues = z.infer<typeof siteSeoFormSchema>;
@@ -61,6 +72,14 @@ export type SiteSeoFields = {
   description: string | null;
   og_image_url: string | null;
   google_site_verification: string | null;
+  locality: string | null;
+  region: string | null;
+  google_business_url: string | null;
+};
+
+export type DocumentFaqItem = {
+  question: string;
+  answer: string;
 };
 
 export function siteSeoFromRecord(
@@ -72,6 +91,9 @@ export function siteSeoFromRecord(
     description: stringOrNull(source.description),
     og_image_url: stringOrNull(source.og_image_url),
     google_site_verification: stringOrNull(source.google_site_verification),
+    locality: stringOrNull(source.locality),
+    region: stringOrNull(source.region),
+    google_business_url: stringOrNull(source.google_business_url),
   };
 }
 
@@ -83,6 +105,9 @@ export function parseSiteSeoForm(formData: FormData) {
     google_site_verification: String(
       formData.get("google_site_verification") ?? "",
     ),
+    locality: String(formData.get("locality") ?? ""),
+    region: String(formData.get("region") ?? ""),
+    google_business_url: String(formData.get("google_business_url") ?? ""),
   });
 }
 
@@ -92,31 +117,13 @@ export function mergeSiteSeo(
   values: SiteSeoFormValues,
 ): Record<string, unknown> {
   const next: Record<string, unknown> = { ...current };
-
-  if (values.title) {
-    next.title = values.title;
-  } else {
-    delete next.title;
-  }
-
-  if (values.description) {
-    next.description = values.description;
-  } else {
-    delete next.description;
-  }
-
-  if (values.og_image_url) {
-    next.og_image_url = values.og_image_url;
-  } else {
-    delete next.og_image_url;
-  }
-
-  if (values.google_site_verification) {
-    next.google_site_verification = values.google_site_verification;
-  } else {
-    delete next.google_site_verification;
-  }
-
+  setOrDelete(next, "title", values.title);
+  setOrDelete(next, "description", values.description);
+  setOrDelete(next, "og_image_url", values.og_image_url);
+  setOrDelete(next, "google_site_verification", values.google_site_verification);
+  setOrDelete(next, "locality", values.locality);
+  setOrDelete(next, "region", values.region);
+  setOrDelete(next, "google_business_url", values.google_business_url);
   return next;
 }
 
@@ -125,20 +132,89 @@ export function seoFromDocument(document: SiteDocument): {
   description: string;
   ogImage: string | null;
   googleSiteVerification: string | null;
+  locality: string | null;
+  region: string | null;
+  googleBusinessUrl: string | null;
 } {
   const fields = siteSeoFromRecord(document.site.seo);
   const name = professionalDisplayName(document.professional);
+  const officeCity = officeCityFromProfessional(document.professional.office_address);
+  const locality = fields.locality ?? officeCity;
+
+  let description = fields.description;
+  if (!description) {
+    description = locality
+      ? `Atendimento clínico com ${name} em ${locality}.`
+      : `Atendimento clínico com ${name}.`;
+  }
 
   return {
     title: fields.title ?? name,
-    description:
-      fields.description ?? `Atendimento clínico com ${name}.`,
+    description,
     ogImage:
       fields.og_image_url ??
       document.professional.photo_url?.trim() ??
       null,
     googleSiteVerification: fields.google_site_verification,
+    locality,
+    region: fields.region ?? officeRegionFromProfessional(document.professional.office_address),
+    googleBusinessUrl: fields.google_business_url,
   };
+}
+
+/** FAQ visível no snapshot (só seções publicadas entram no document). */
+export function documentFaqItems(document: SiteDocument): DocumentFaqItem[] {
+  const home = document.pages.find((page) => page.path === "/") ?? document.pages[0];
+  if (!home) {
+    return [];
+  }
+
+  const items: DocumentFaqItem[] = [];
+  for (const section of home.sections) {
+    if (section.module !== "faq") {
+      continue;
+    }
+    const parsed = faqContentSchema.safeParse(section.content ?? {});
+    if (!parsed.success) {
+      continue;
+    }
+    for (const item of parsed.data.items) {
+      if (item.question.trim() && item.answer.trim()) {
+        items.push({
+          question: item.question.trim(),
+          answer: item.answer.trim(),
+        });
+      }
+    }
+  }
+  return items;
+}
+
+export function socialProfileUrls(document: SiteDocument): string[] {
+  const links = document.professional.social_links;
+  if (!links || typeof links !== "object" || Array.isArray(links)) {
+    return [];
+  }
+  const raw = links as Record<string, unknown>;
+  const urls: string[] = [];
+  for (const key of ["instagram", "linkedin", "website", "facebook", "youtube"]) {
+    const value = stringOrNull(raw[key]);
+    if (!value) {
+      continue;
+    }
+    if (/^https?:\/\//i.test(value)) {
+      urls.push(value);
+    } else if (key === "instagram") {
+      urls.push(`https://instagram.com/${value.replace(/^@/, "")}`);
+    } else if (key === "linkedin") {
+      urls.push(
+        value.includes("linkedin.com")
+          ? `https://${value.replace(/^https?:\/\//i, "")}`
+          : `https://www.linkedin.com/in/${value}`,
+      );
+    }
+  }
+  return urls;
 }
 
 /** Canonical preferindo domínio personalizado principal verificado. */
@@ -199,6 +275,7 @@ export function buildPageMetadata(input: {
       url: input.canonical,
       type: input.type ?? "website",
       images,
+      locale: "pt_BR",
     },
     twitter: {
       card: images ? "summary_large_image" : "summary",
@@ -233,16 +310,26 @@ export function postSeoMetadata(
   };
 }
 
+export type SeoChecklistGroup = "basico" | "descoberta" | "conteudo";
+
 export type SeoChecklistItem = {
   id: string;
   label: string;
   ok: boolean;
   hint?: string;
+  group: SeoChecklistGroup;
+};
+
+export type SeoChecklistSectionInput = {
+  module_key: string;
+  is_visible: boolean;
+  content: Record<string, unknown>;
 };
 
 export function buildSeoChecklist(input: {
   seo: Record<string, unknown>;
   document: SiteDocument | null;
+  sections?: SeoChecklistSectionInput[];
   hasVerifiedDomain: boolean;
   isLive: boolean;
 }): SeoChecklistItem[] {
@@ -250,6 +337,12 @@ export function buildSeoChecklist(input: {
   const posts = input.document?.blog.posts ?? [];
   const postsWithoutExcerpt = posts.filter((post) => !post.excerpt?.trim());
   const postsWithoutCover = posts.filter((post) => !post.cover_image_url);
+  const officeCity = input.document
+    ? officeCityFromProfessional(input.document.professional.office_address)
+    : null;
+  const hasLocality = Boolean(fields.locality || officeCity);
+  const socialCount = input.document ? socialProfileUrls(input.document).length : 0;
+  const faqState = resolveFaqChecklist(input.sections, input.document);
 
   return [
     {
@@ -259,6 +352,7 @@ export function buildSeoChecklist(input: {
       hint: fields.title
         ? undefined
         : "Sem título customizado, o Google usa o nome do profissional.",
+      group: "basico",
     },
     {
       id: "description",
@@ -267,12 +361,14 @@ export function buildSeoChecklist(input: {
       hint: fields.description
         ? undefined
         : "Adicione uma frase clara sobre o atendimento (até 170 caracteres).",
+      group: "basico",
     },
     {
       id: "og",
       label: "Imagem de compartilhamento",
       ok: Boolean(fields.og_image_url || input.document?.professional.photo_url),
       hint: "Usada no WhatsApp e redes. Sem ela, cai na foto do perfil.",
+      group: "basico",
     },
     {
       id: "live",
@@ -281,6 +377,7 @@ export function buildSeoChecklist(input: {
       hint: input.isLive
         ? undefined
         : "SEO público só vale depois que a equipe publica o snapshot.",
+      group: "basico",
     },
     {
       id: "domain",
@@ -289,6 +386,42 @@ export function buildSeoChecklist(input: {
       hint: input.hasVerifiedDomain
         ? undefined
         : "Sem domínio próprio, o canonical usa a URL da plataforma.",
+      group: "basico",
+    },
+    {
+      id: "locality",
+      label: "Cidade / região de atendimento",
+      ok: hasLocality,
+      hint: hasLocality
+        ? undefined
+        : "Ajuda Google e ChatGPT a associar você a buscas locais (ex.: psicólogo em Curitiba).",
+      group: "descoberta",
+    },
+    {
+      id: "faq",
+      label: "FAQ visível com perguntas",
+      ok: faqState.ok,
+      hint: faqState.hint,
+      group: "descoberta",
+    },
+    {
+      id: "social",
+      label: "Perfis sociais no cadastro",
+      ok: socialCount > 0,
+      hint:
+        socialCount > 0
+          ? undefined
+          : "Instagram/LinkedIn no perfil reforçam a entidade do profissional na web.",
+      group: "descoberta",
+    },
+    {
+      id: "gmb",
+      label: "Google Business (URL)",
+      ok: Boolean(fields.google_business_url),
+      hint: fields.google_business_url
+        ? undefined
+        : "Opcional, mas forte para aparecer em recomendações locais.",
+      group: "descoberta",
     },
     {
       id: "posts-excerpt",
@@ -298,6 +431,7 @@ export function buildSeoChecklist(input: {
         postsWithoutExcerpt.length > 0
           ? `${postsWithoutExcerpt.length} post(s) sem resumo.`
           : undefined,
+      group: "conteudo",
     },
     {
       id: "posts-cover",
@@ -307,8 +441,78 @@ export function buildSeoChecklist(input: {
         postsWithoutCover.length > 0
           ? `${postsWithoutCover.length} post(s) sem imagem de capa.`
           : undefined,
+      group: "conteudo",
     },
   ];
+}
+
+function resolveFaqChecklist(
+  sections: SeoChecklistSectionInput[] | undefined,
+  document: SiteDocument | null,
+): { ok: boolean; hint?: string } {
+  if (sections && sections.length > 0) {
+    const faqSections = sections.filter((section) => section.module_key === "faq");
+    if (faqSections.length === 0) {
+      return {
+        ok: false,
+        hint: "Ative a seção FAQ no editor e preencha 3–5 dúvidas reais.",
+      };
+    }
+    const visible = faqSections.filter((section) => section.is_visible);
+    if (visible.length === 0) {
+      return {
+        ok: false,
+        hint: "A seção FAQ existe, mas está oculta. Deixe visível e publique de novo.",
+      };
+    }
+    const hasItems = visible.some((section) => {
+      const parsed = faqContentSchema.safeParse(section.content ?? {});
+      return parsed.success && parsed.data.items.length > 0;
+    });
+    if (!hasItems) {
+      return {
+        ok: false,
+        hint: "FAQ visível sem perguntas. Adicione respostas curtas e claras.",
+      };
+    }
+    return { ok: true };
+  }
+
+  const publishedItems = document ? documentFaqItems(document) : [];
+  if (publishedItems.length === 0) {
+    return {
+      ok: false,
+      hint: "Ative a seção FAQ no editor e preencha 3–5 dúvidas reais.",
+    };
+  }
+  return { ok: true };
+}
+
+function setOrDelete(
+  target: Record<string, unknown>,
+  key: string,
+  value: string | null,
+) {
+  if (value) {
+    target[key] = value;
+  } else {
+    delete target[key];
+  }
+}
+
+function officeCityFromProfessional(value: unknown): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return stringOrNull((value as Record<string, unknown>).city);
+}
+
+function officeRegionFromProfessional(value: unknown): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const raw = value as Record<string, unknown>;
+  return stringOrNull(raw.state ?? raw.region);
 }
 
 function stringOrNull(value: unknown): string | null {

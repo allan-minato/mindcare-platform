@@ -40,7 +40,7 @@ export function SiteSeoForm({ action, initial }: SiteSeoFormProps) {
           name="title"
           maxLength={70}
           defaultValue={initial.title ?? ""}
-          placeholder="Ex.: Dra. Ana — Psicologia clínica"
+          placeholder="Ex.: Dra. Ana — Psicologia clínica em Curitiba"
           className="w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
         />
         {state.fieldErrors?.title?.[0] ? (
@@ -49,7 +49,7 @@ export function SiteSeoForm({ action, initial }: SiteSeoFormProps) {
           </p>
         ) : (
           <p className="portal-hint" style={{ margin: 0 }}>
-            Até 70 caracteres. Vazio = nome do profissional.
+            Até 70 caracteres. Inclua cidade se for atendimento local.
           </p>
         )}
       </div>
@@ -78,6 +78,49 @@ export function SiteSeoForm({ action, initial }: SiteSeoFormProps) {
         )}
       </div>
 
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-1.5">
+          <label htmlFor="seo-locality" className="text-sm font-medium">
+            Cidade
+          </label>
+          <input
+            id="seo-locality"
+            name="locality"
+            maxLength={80}
+            defaultValue={initial.locality ?? ""}
+            placeholder="Ex.: Curitiba"
+            className="w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+          />
+          {state.fieldErrors?.locality?.[0] ? (
+            <p className="text-xs text-red-700 dark:text-red-400">
+              {state.fieldErrors.locality[0]}
+            </p>
+          ) : null}
+        </div>
+        <div className="grid gap-1.5">
+          <label htmlFor="seo-region" className="text-sm font-medium">
+            Estado / UF
+          </label>
+          <input
+            id="seo-region"
+            name="region"
+            maxLength={40}
+            defaultValue={initial.region ?? ""}
+            placeholder="Ex.: PR"
+            className="w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+          />
+          {state.fieldErrors?.region?.[0] ? (
+            <p className="text-xs text-red-700 dark:text-red-400">
+              {state.fieldErrors.region[0]}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <p className="portal-hint" style={{ margin: 0 }}>
+        Usado no schema local e na descrição automática. Se vazio, tenta o
+        endereço do profissional.
+      </p>
+
       <div className="grid gap-1.5">
         <label htmlFor="seo-og" className="text-sm font-medium">
           Imagem de compartilhamento (URL https)
@@ -98,6 +141,30 @@ export function SiteSeoForm({ action, initial }: SiteSeoFormProps) {
         ) : (
           <p className="portal-hint" style={{ margin: 0 }}>
             Ideal 1200×630. Sem URL, usa a foto do perfil.
+          </p>
+        )}
+      </div>
+
+      <div className="grid gap-1.5">
+        <label htmlFor="seo-gmb" className="text-sm font-medium">
+          Google Business (URL do perfil)
+        </label>
+        <input
+          id="seo-gmb"
+          name="google_business_url"
+          type="url"
+          inputMode="url"
+          defaultValue={initial.google_business_url ?? ""}
+          placeholder="https://g.page/… ou maps.google.com/…"
+          className="w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+        />
+        {state.fieldErrors?.google_business_url?.[0] ? (
+          <p className="text-xs text-red-700 dark:text-red-400">
+            {state.fieldErrors.google_business_url[0]}
+          </p>
+        ) : (
+          <p className="portal-hint" style={{ margin: 0 }}>
+            Entra no schema sameAs — reforça descoberta local.
           </p>
         )}
       </div>
