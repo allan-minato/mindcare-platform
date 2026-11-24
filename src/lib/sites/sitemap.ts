@@ -1,13 +1,18 @@
-import type { MetadataRoute } from "next";
-
 import { publishedCanonicalUrl } from "@/lib/sites/seo";
 import type { PublishedSite } from "@/lib/tenant";
 
-export function buildPublishedSitemap(
+type SitemapEntry = {
+  url: string;
+  lastModified: Date;
+  changeFrequency: "weekly" | "monthly";
+  priority: number;
+};
+
+export function buildPublishedSitemapEntries(
   published: PublishedSite,
-): MetadataRoute.Sitemap {
+): SitemapEntry[] {
   const lastMod = new Date(published.published_at);
-  const entries: MetadataRoute.Sitemap = [
+  const entries: SitemapEntry[] = [
     {
       url: publishedCanonicalUrl(published, "/"),
       lastModified: lastMod,
@@ -42,15 +47,60 @@ export function buildPublishedSitemap(
   return entries;
 }
 
-export function buildPublishedRobots(
-  published: PublishedSite,
-): MetadataRoute.Robots {
-  const sitemap = publishedCanonicalUrl(published, "/sitemap.xml");
-  return {
-    rules: {
-      userAgent: "*",
-      allow: "/",
+/** Sitemap em XML. Rota `/sitemap` (não `/sitemap.xml`) evita bug do Next 16 com segmentos dinâmicos. */
+export function renderSitemapXml(published: PublishedSite): string {
+  const entries = buildPublishedSitemapEntries(published);
+  const urls = entries
+    .map((entry) => {
+      const lastmod = entry.lastModified.toISOString();
+      return `  <url>
+    <loc>${escapeXml(entry.url)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>${entry.changeFrequency}</changefreq>
+    <priority>${entry.priority.toFixed(1)}</priority>
+  </url>`;
+    })
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>
+`;
+}
+
+export function renderRobotsTxt(published: PublishedSite): string {
+  const sitemap = publishedCanonicalUrl(published, "/sitemap");
+  return `User-agent: *
+Allow: /
+
+Sitemap: ${sitemap}
+`;
+}
+
+export function sitemapResponse(xml: string): Response {
+  return new Response(xml, {
+    headers: {
+      "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
     },
-    sitemap,
-  };
+  });
+}
+
+export function robotsResponse(body: string): Response {
+  return new Response(body, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+    },
+  });
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
 }
