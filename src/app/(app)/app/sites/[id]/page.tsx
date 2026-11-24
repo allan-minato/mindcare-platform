@@ -6,7 +6,6 @@ import { SiteSectionsEditor } from "@/app/(admin)/admin/sites/site-sections-edit
 import {
   PortalPage,
   PortalPageHeader,
-  SiteWorkspaceNav,
   StatusChip,
 } from "@/components/portal";
 import { requireProfessionalProfile } from "@/lib/auth/professional";
@@ -70,9 +69,6 @@ export default async function PortalSitePage({ params }: PageProps) {
         >
           Ver prévia
         </Link>
-      }
-      nav={
-        <SiteWorkspaceNav siteId={site.id} basePath="/app" active="editor" />
       }
     />
   );

@@ -7,7 +7,6 @@ import {
   PortalPage,
   PortalPageHeader,
   PortalSection,
-  SiteWorkspaceNav,
   StatusChip,
 } from "@/components/portal";
 import { hasMinRole, requireAdminProfile } from "@/lib/auth/admin";
@@ -71,9 +70,6 @@ export default async function AdminSiteDomainsPage({ params }: PageProps) {
           >
             Ver prévia
           </Link>
-        }
-        nav={
-          <SiteWorkspaceNav siteId={id} basePath="/admin" active="domains" />
         }
       />
 

@@ -8,7 +8,6 @@ import {
   PortalPage,
   PortalPageHeader,
   PortalSection,
-  SiteWorkspaceNav,
   StatusChip,
 } from "@/components/portal";
 import { SeoChecklist } from "@/components/seo/seo-checklist";
@@ -124,9 +123,6 @@ export default async function AdminSiteSeoPage({ params }: PageProps) {
               Ver prévia
             </Link>
           </>
-        }
-        nav={
-          <SiteWorkspaceNav siteId={id} basePath="/admin" active="seo" />
         }
       />
 

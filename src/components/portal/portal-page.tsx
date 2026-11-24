@@ -29,8 +29,6 @@ type PortalPageHeaderProps = {
   backLabel?: string;
   /** Ações primárias (ex.: Ver prévia, Novo post). */
   actions?: ReactNode;
-  /** Navegação secundária (abas do site). */
-  nav?: ReactNode;
 };
 
 export function PortalPageHeader({
@@ -41,7 +39,6 @@ export function PortalPageHeader({
   backHref,
   backLabel = "Voltar",
   actions,
-  nav,
 }: PortalPageHeaderProps) {
   return (
     <header className="portal-page-header">
@@ -62,7 +59,6 @@ export function PortalPageHeader({
           <div className="portal-page-header-actions">{actions}</div>
         ) : null}
       </div>
-      {nav ? <div className="portal-page-header-nav">{nav}</div> : null}
     </header>
   );
 }

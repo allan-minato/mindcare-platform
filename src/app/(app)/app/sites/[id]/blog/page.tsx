@@ -8,7 +8,6 @@ import {
   PortalPage,
   PortalPageHeader,
   PortalSection,
-  SiteWorkspaceNav,
   StatusChip,
 } from "@/components/portal";
 import { requireProfessionalProfile } from "@/lib/auth/professional";
@@ -66,7 +65,6 @@ export default async function AppSiteBlogPage({ params }: PageProps) {
             </Link>
           </>
         }
-        nav={<SiteWorkspaceNav siteId={id} basePath="/app" active="blog" />}
       />
 
       <PortalSection

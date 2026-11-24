@@ -339,14 +339,27 @@ a.portal-btn-danger:hover {
   flex: 0 1 auto;
 }
 
-.portal-page-header-nav {
-  padding-top: 0.15rem;
-  border-top: 1px solid var(--portal-line);
+.portal-site-workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.portal-workspace-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0.55rem 1.5rem 0;
+  border-bottom: 1px solid var(--portal-line);
+  background: rgba(247, 244, 239, 0.72);
 }
 
 .portal-subnav {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.15rem 0.35rem;
   margin: 0;
   padding: 0;
@@ -372,6 +385,7 @@ a.portal-btn-danger:hover {
 .portal-subnav-link[data-active="true"] {
   color: var(--portal-ink);
   border-bottom-color: var(--portal-ink);
+  background: rgba(20, 18, 16, 0.06);
   font-weight: 700;
 }
 

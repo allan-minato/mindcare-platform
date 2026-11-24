@@ -8,7 +8,6 @@ import {
   PortalPage,
   PortalPageHeader,
   PortalSection,
-  SiteWorkspaceNav,
   StatusChip,
 } from "@/components/portal";
 import { SeoChecklist } from "@/components/seo/seo-checklist";
@@ -115,7 +114,6 @@ export default async function AppSiteSeoPage({ params }: PageProps) {
             Ver prévia
           </Link>
         }
-        nav={<SiteWorkspaceNav siteId={id} basePath="/app" active="seo" />}
       />
 
       <SeoPageIntro publishNote="a equipe MindCare precisa publicar de novo para ir ao ar." />
