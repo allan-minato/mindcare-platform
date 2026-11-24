@@ -174,12 +174,7 @@ export default async function AdminSiteSeoPage({ params }: PageProps) {
         <SeoChecklist items={seoChecklist} />
       </PortalSection>
 
-      <PortalSection
-        title="Conferir no Google"
-        description="Só para validar o site publicado: abrir robots/sitemap e atalhos oficiais. A edição do SEO continua nos metadados acima."
-      >
-        <SeoCrawlLinks publicOrigin={publicOrigin} isLive={isLive} />
-      </PortalSection>
+      <SeoCrawlLinks publicOrigin={publicOrigin} isLive={isLive} />
     </PortalPage>
   );
 }

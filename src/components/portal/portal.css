@@ -1112,9 +1112,14 @@ a.portal-btn-danger:hover {
   background: rgba(20, 18, 16, 0.06);
 }
 
+.seo-crawl-disclosure {
+  margin-top: 0.25rem;
+}
+
 .seo-crawl-links {
   display: grid;
   gap: 1rem;
+  margin-top: 0.85rem;
 }
 
 .seo-crawl-item {
